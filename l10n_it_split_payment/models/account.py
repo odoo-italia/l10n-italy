@@ -6,8 +6,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
-import odoo.addons.decimal_precision as dp
-
 
 class AccountFiscalPosition(models.Model):
     _inherit = "account.fiscal.position"
@@ -15,37 +13,43 @@ class AccountFiscalPosition(models.Model):
     split_payment = fields.Boolean("Split Payment")
 
 
-class AccountInvoice(models.Model):
-    _inherit = "account.invoice"
+class AccountMove(models.Model):
+    _inherit = "account.move"
 
     amount_sp = fields.Float(
         string="Split Payment",
-        digits=dp.get_precision("Account"),
+        digits="Account",
         store=True,
         readonly=True,
         compute="_compute_amount",
     )
     split_payment = fields.Boolean(
-        "Is Split Payment", related="fiscal_position_id.split_payment"
+        string="Is Split Payment", related="fiscal_position_id.split_payment"
     )
 
-    @api.one
     @api.depends(
         "invoice_line_ids.price_subtotal",
-        "tax_line_ids.amount",
-        "tax_line_ids.amount_rounding",
         "currency_id",
         "company_id",
-        "date_invoice",
-        "type",
+        "invoice_date",
+        "move_type",
     )
     def _compute_amount(self):
-        super(AccountInvoice, self)._compute_amount()
-        self.amount_sp = 0
-        if self.fiscal_position_id.split_payment:
-            self.amount_sp = self.amount_tax
-            self.amount_tax = 0
-        self.amount_total = self.amount_untaxed + self.amount_tax
+        super(AccountMove, self)._compute_amount()
+        for move in self:
+            move.amount_sp = 0
+            if move.fiscal_position_id.split_payment:
+                move.amount_sp = move.amount_tax
+                move.amount_tax = 0
+            move.amount_total = move.amount_untaxed + move.amount_tax
+
+            if move.amount_sp != 0:
+                if move.is_purchase_document():
+                    raise UserError(
+                        _("Can't handle supplier invoices with split payment")
+                    )
+                else:
+                    move._compute_split_payments()
 
     def _build_debit_line(self):
         if not self.company_id.sp_account_id:
@@ -60,70 +64,40 @@ class AccountInvoice(models.Model):
             "partner_id": self.partner_id.id,
             "account_id": self.company_id.sp_account_id.id,
             "journal_id": self.journal_id.id,
-            "date": self.date_invoice,
-            "debit": self.amount_sp,
-            "credit": 0,
+            "date": self.invoice_date,
+            "date_maturity": self.invoice_date,
+            "price_unit": -self.amount_sp,
+            "exclude_from_invoice_tab": True,
+            "move_id": self.id,
+            "is_split_payment": True,
         }
-        if self.type == "out_refund":
-            vals["debit"] = 0
-            vals["credit"] = self.amount_sp
+        if self.move_type == "out_refund":
+            vals["price_unit"] = self.amount_sp
         return vals
 
-    @api.multi
-    def get_receivable_line_ids(self):
-        # return the move line ids with the same account as the invoice self
-        self.ensure_one()
-        return self.move_id.line_ids.filtered(
-            lambda r: r.account_id.id == self.account_id.id
-        ).ids
-
-    @api.multi
     def _compute_split_payments(self):
-        for invoice in self:
-            receivable_line_ids = invoice.get_receivable_line_ids()
-            move_line_pool = self.env["account.move.line"]
-            for receivable_line in move_line_pool.browse(receivable_line_ids):
-                inv_total = invoice.amount_sp + invoice.amount_total
-                if invoice.type == "out_invoice":
-                    if inv_total:
-                        receivable_line_amount = (
-                            invoice.amount_total * receivable_line.debit
-                        ) / inv_total
-                    else:
-                        receivable_line_amount = 0
-                    receivable_line.with_context(check_move_validity=False).write(
-                        {"debit": receivable_line_amount}
-                    )
-                elif invoice.type == "out_refund":
-                    if inv_total:
-                        receivable_line_amount = (
-                            invoice.amount_total * receivable_line.credit
-                        ) / inv_total
-                    else:
-                        receivable_line_amount = 0
-                    receivable_line.with_context(check_move_validity=False).write(
-                        {"credit": receivable_line_amount}
-                    )
-
-    @api.multi
-    def action_move_create(self):
-        res = super(AccountInvoice, self).action_move_create()
-        for invoice in self:
-            if invoice.split_payment:
-                if invoice.type in ["in_invoice", "in_refund"]:
-                    raise UserError(
-                        _("Can't handle supplier invoices with split payment")
-                    )
-                if invoice.move_id.state == "posted":
-                    posted = True
-                    invoice.move_id.state = "draft"
-                self._compute_split_payments()
-                line_model = self.env["account.move.line"]
-                write_off_line_vals = invoice._build_debit_line()
-                write_off_line_vals["move_id"] = invoice.move_id.id
-                line_model.with_context(check_move_validity=False).create(
-                    write_off_line_vals
+        write_off_line_vals = self._build_debit_line()
+        line_sp = self.line_ids.filtered(lambda l: l.is_split_payment)
+        if line_sp:
+            dif_price = write_off_line_vals["price_unit"] - line_sp.price_unit
+            if write_off_line_vals["price_unit"] == 0:
+                line_sp.with_context(check_move_validity=False).unlink()
+            else:
+                line_sp.with_context(check_move_validity=False).write(
+                    {"price_unit": write_off_line_vals["price_unit"]}
                 )
-                if posted:
-                    invoice.move_id.state = "posted"
-        return res
+            line_client = self.line_ids.filtered(
+                lambda l: l.account_id.id
+                == self.partner_id.property_account_receivable_id.id
+            )
+            if line_client:
+                line_client.write({"price_unit": line_client.price_unit - dif_price})
+        else:
+            if self.id:
+                self.invoice_line_ids.create(write_off_line_vals)
+
+
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    is_split_payment = fields.Boolean(string="Is Split Payment")
