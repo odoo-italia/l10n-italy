@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
     <record id="view_partner_form_e_inv" model="ir.ui.view">
         <field name="name">res.partner.form.e.invoice</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
             <xpath expr="//div[@name='div_address']/../../.." position="after">
+                <field name="electronic_invoice_obliged_subject" invisible="True" />
+                <field name="electronic_invoice_subjected" invisible="True" />
                 <group
                     string="E-invoicing"
                     name="e_invoice_info"
                     groups="account.group_account_invoice"
+                    attrs="{'invisible': ['|', ('type', '=', 'contact'), '|', ('parent.electronic_invoice_subjected', '=', False), ('parent.electronic_invoice_obliged_subject', '=', False)]}"
                 >
                     <group>
                         <field name="electronic_invoice_use_this_address" />
@@ -37,7 +39,6 @@
             </xpath>
         </field>
     </record>
-
     <record model="ir.ui.view" id="view_partner_form_fatturapa">
         <field name="name">partner.form.fatturapa</field>
         <field name="model">res.partner</field>
@@ -50,14 +51,10 @@
                     groups="account.group_account_invoice"
                 >
                 <group name="fatturapa_group">
-                    <label
-                            for="electronic_invoice_no_contact_update"
-                            attrs="{'invisible': [('supplier', '=', False)]}"
-                        />
-                    <field
-                            name="electronic_invoice_no_contact_update"
-                            attrs="{'invisible': [('supplier', '=', False)]}"
-                        />
+                    <group>
+                        <label for="electronic_invoice_no_contact_update" />
+                        <field name="electronic_invoice_no_contact_update" />
+                    </group>
                     <group>
                         <field name="electronic_invoice_subjected" />
                         <field
@@ -83,7 +80,7 @@
                             />
                         <field name="eori_code" />
                     </group>
-	        </group>
+                </group>
             </page>
             </notebook>
             <xpath expr="//group[@name='e_invoice_info']" position="attributes">
@@ -102,5 +99,4 @@
             <field name="ipa_code" position="replace" />
         </field>
     </record>
-
 </odoo>
