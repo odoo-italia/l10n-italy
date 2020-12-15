@@ -2,3 +2,4 @@
 asn1crypto
 codicefiscale
 PyXB >= 1.2.6
+unidecode
