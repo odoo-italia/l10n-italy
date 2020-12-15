@@ -6,7 +6,7 @@
 
 {
     "name": "ITA - Fattura elettronica - Base",
-    "version": "14.0.2.0.2",
+    "version": "14.0.2.0.3",
     "category": "Localization/Italy",
     "summary": "Fatture elettroniche",
     "author": "Davide Corio, Agile Business Group, Innoviu, "
@@ -17,14 +17,13 @@
     "depends": [
         "l10n_it_account",
         "l10n_it_fiscalcode",
-        "document",
+        "attachment_indexation",
         "l10n_it_ipa",
         "l10n_it_rea",
         "base_iban",
         "l10n_it_account_tax_kind",
-        "l10n_it_esigibilita_iva",
+        "l10n_it_vat_payability",
         "l10n_it_fiscal_payment_term",
-        "l10n_it_split_payment",
         "l10n_it_fiscal_document_type",
         "partner_firstname",
     ],
@@ -34,13 +33,13 @@
         "views/account_view.xml",
         "views/company_view.xml",
         "views/partner_view.xml",
-        "views/invoice_view.xml",
+        "views/account_move_view.xml",
         "views/related_document_type_views.xml",
         "security/ir.model.access.csv",
     ],
     "demo": ["demo/account_invoice_fatturapa.xml"],
     "installable": True,
     "external_dependencies": {
-        "python": ["pyxb", "asn1crypto"],  # pyxb 1.2.6
+        "python": ["asn1crypto"],
     },
 }
