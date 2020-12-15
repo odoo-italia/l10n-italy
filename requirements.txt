@@ -1,4 +1,4 @@
 # generated from manifests external_dependencies
 asn1crypto
 codicefiscale
-pyxb
+PyXB >= 1.2.6
