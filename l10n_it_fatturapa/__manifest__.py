@@ -22,7 +22,7 @@
         "l10n_it_rea",
         "base_iban",
         "l10n_it_account_tax_kind",
-        "l10n_it_esigibilita_iva",
+        "l10n_it_vat_payability",
         "l10n_it_fiscal_payment_term",
         "l10n_it_split_payment",
         "l10n_it_fiscal_document_type",
