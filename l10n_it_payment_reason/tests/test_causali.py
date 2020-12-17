@@ -6,7 +6,7 @@ class TestCausali(TransactionCase):
     def setUp(self):
         super(TestCausali, self).setUp()
         self.causale_model = self.env["causale.pagamento"]
-        self.causale_b = self.env.ref("l10n_it_causali_pagamento.b")
+        self.causale_b = self.env.ref("l10n_it_payment_reason.b")
 
     def test_causali(self):
         with self.assertRaises(ValidationError):
@@ -23,9 +23,9 @@ class TestCausali(TransactionCase):
         )
 
     def test_renaming_causali(self):
-        causale_zo = self.env.ref("l10n_it_causali_pagamento.z")
+        causale_zo = self.env.ref("l10n_it_payment_reason.z")
         self.assertEqual(causale_zo.code, "ZO")
-        causale_l = self.env.ref("l10n_it_causali_pagamento.l")
+        causale_l = self.env.ref("l10n_it_payment_reason.l")
         name = (
             "Redditi derivanti dall’utilizzazione economica di opere "
             "dell’ingegno, di brevetti industriali e di processi, formule e "

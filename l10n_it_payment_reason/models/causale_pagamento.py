@@ -4,7 +4,7 @@ from odoo.exceptions import ValidationError
 
 class CausalePagamento(models.Model):
     _name = "causale.pagamento"
-    _description = "Causale Pagamento"
+    _description = "Payment Reason"
 
     @api.constrains("code")
     def _check_code(self):
@@ -16,7 +16,6 @@ class CausalePagamento(models.Model):
                     _("The element with code %s already exists") % causale.code
                 )
 
-    @api.multi
     def name_get(self):
         res = []
         for cau in self:

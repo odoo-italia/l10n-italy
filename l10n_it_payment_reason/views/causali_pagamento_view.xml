@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
 
-    <record id="view_causale_pagamento_tree" model="ir.ui.view">
-        <field name="name">view.causale.pagamento.tree</field>
+    <record id="view_payment_reason_tree" model="ir.ui.view">
+        <field name="name">view.payment.reason.tree</field>
         <field name="model">causale.pagamento</field>
         <field name="arch" type="xml">
-            <tree string="Causale pagamento">
+            <tree string="Payment Reason">
                 <field name="code" />
                 <field name="name" />
             </tree>
         </field>
     </record>
 
-    <record id="view_causale_pagamento_form" model="ir.ui.view">
-        <field name="name">view.causale.pagamento.form</field>
+    <record id="view_payment_reason_form" model="ir.ui.view">
+        <field name="name">view.payment.reason.form</field>
         <field name="model">causale.pagamento</field>
         <field name="arch" type="xml">
-            <form string="Causale pagamento">
+            <form string="Payment Reason">
                 <sheet>
                     <group>
                         <field name="code" />
@@ -27,16 +27,16 @@
         </field>
     </record>
 
-    <record id="action_causale_pagamento" model="ir.actions.act_window">
-        <field name="name">Causali pagamento</field>
+    <record id="action_payment_reason" model="ir.actions.act_window">
+        <field name="name">Payment Reasons</field>
         <field name="res_model">causale.pagamento</field>
-        <field name="view_id" ref="view_causale_pagamento_tree" />
+        <field name="view_id" ref="view_payment_reason_tree" />
     </record>
 
     <menuitem
-        id="menu_causale_pagamento"
-        name="Causali pagamento"
-        action="action_causale_pagamento"
+        id="menu_payment_reason"
+        name="Payment Reasons"
+        action="action_payment_reason"
         parent="l10n_it_account.account_italian_localization"
         groups="account.group_account_manager"
         sequence="45"
