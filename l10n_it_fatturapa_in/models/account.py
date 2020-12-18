@@ -175,6 +175,9 @@ class AccountInvoice(models.Model):
     )
     def _compute_e_invoice_validation_error(self):
         self.ensure_one()
+        self.e_invoice_validation_error = False
+        self.e_invoice_validation_message = False
+
         bills_to_check = self.filtered(
             lambda inv: inv.move_type in ["in_invoice", "in_refund"]
             and inv.state in ["draft", "open", "paid"]
@@ -246,8 +249,8 @@ class AccountInvoice(models.Model):
                         invoice.amount_total_signed,
                         invoice.currency_id.symbol,
                     )
-                if invoice.origin:
-                    name += ", %s" % invoice.origin
+                if invoice.invoice_origin:
+                    name += ", %s" % invoice.invoice_origin
                 res.append((invoice.id, name))
             else:
                 res.append(tup)
