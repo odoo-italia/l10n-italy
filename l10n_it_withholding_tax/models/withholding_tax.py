@@ -15,23 +15,23 @@ class WithholdingTax(models.Model):
         "rate_ids.date_start", "rate_ids.date_stop", "rate_ids.base", "rate_ids.tax"
     )
     def _compute_get_rate(self):
-        self.ensure_one()
-        self.env.cr.execute(
-            """
-            SELECT tax, base FROM withholding_tax_rate
-                WHERE withholding_tax_id = %s
-                 and (date_start <= current_date or date_start is null)
-                 and (date_stop >= current_date or date_stop is null)
-                ORDER by date_start LIMIT 1""",
-            (self.id,),
-        )
-        rate = self.env.cr.fetchone()
-        if rate:
-            self.tax = rate[0]
-            self.base = rate[1]
-        else:
-            self.tax = 0
-            self.base = 1
+        for wt in self:
+            self.env.cr.execute(
+                """
+                SELECT tax, base FROM withholding_tax_rate
+                    WHERE withholding_tax_id = %s
+                     and (date_start <= current_date or date_start is null)
+                     and (date_stop >= current_date or date_stop is null)
+                    ORDER by date_start LIMIT 1""",
+                (wt.id,),
+            )
+            rate = self.env.cr.fetchone()
+            if rate:
+                wt.tax = rate[0]
+                wt.base = rate[1]
+            else:
+                wt.tax = 0
+                wt.base = 1
 
     def _default_wt_journal(self):
         misc_journal = self.env["account.journal"].search([("code", "=", _("MISC"))])
