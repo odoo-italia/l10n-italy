@@ -947,7 +947,6 @@ class WizardImportFatturapa(models.TransientModel):
         invoice._onchange_invoice_line_wt_ids()
         invoice._recompute_dynamic_lines()
         invoice.write(invoice._convert_to_write(invoice._cache))
-        invoice_id = invoice.id
 
         rel_docs_dict = {
             # 2.1.2
@@ -966,22 +965,22 @@ class WizardImportFatturapa(models.TransientModel):
             if not rel_doc_data:
                 continue
             for rel_doc in rel_doc_data:
-                doc_datas = self._prepareRelDocsLine(invoice_id, rel_doc, rel_doc_key)
+                doc_datas = self._prepareRelDocsLine(invoice.id, rel_doc, rel_doc_key)
                 for doc_data in doc_datas:
                     # Note for v12: must take advantage of batch creation
                     rel_docs_model.create(doc_data)
 
         # 2.1.7
-        self.set_activity_progress(FatturaBody, invoice_id)
+        self.set_activity_progress(FatturaBody, invoice)
 
         # 2.1.8
-        self.set_ddt_data(FatturaBody, invoice_id)
+        self.set_ddt_data(FatturaBody, invoice)
 
         # 2.1.9
         self.set_delivery_data(FatturaBody, invoice)
 
         # 2.2.2
-        self.set_summary_data(FatturaBody, invoice_id)
+        self.set_summary_data(FatturaBody, invoice)
 
         # 2.1.10
         self.set_parent_invoice_data(FatturaBody, invoice)
@@ -990,13 +989,13 @@ class WizardImportFatturapa(models.TransientModel):
         self.set_vehicles_data(FatturaBody, invoice)
 
         # 2.4
-        self.set_payments_data(FatturaBody, invoice_id, partner_id)
+        self.set_payments_data(FatturaBody, invoice, partner_id)
 
         # 2.5
-        self.set_attachments_data(FatturaBody, invoice_id)
+        self.set_attachments_data(FatturaBody, invoice)
 
         self._addGlobalDiscount(
-            invoice_id, FatturaBody.DatiGenerali.DatiGeneraliDocumento
+            invoice.id, FatturaBody.DatiGenerali.DatiGeneraliDocumento
         )
 
         self.set_roundings(FatturaBody, invoice)
@@ -1008,7 +1007,7 @@ class WizardImportFatturapa(models.TransientModel):
 
         # this can happen with refunds with negative amounts
         invoice.process_negative_lines()
-        return invoice_id
+        return invoice
 
     def set_vendor_bill_data(self, FatturaBody, invoice):
         if not invoice.invoice_date:
@@ -1049,14 +1048,16 @@ class WizardImportFatturapa(models.TransientModel):
             }
             invoice.write(veicle_vals)
 
-    def set_attachments_data(self, FatturaBody, invoice_id):
+    def set_attachments_data(self, FatturaBody, invoice):
+        invoice_id = invoice.id
         AttachmentsData = FatturaBody.Allegati
         if AttachmentsData:
             self.env["fatturapa.attachment.in"].extract_attachments(
                 AttachmentsData, invoice_id
             )
 
-    def set_ddt_data(self, FatturaBody, invoice_id):
+    def set_ddt_data(self, FatturaBody, invoice):
+        invoice_id = invoice.id
         DdtDatas = FatturaBody.DatiGenerali.DatiDDT
         if not DdtDatas:
             return
@@ -1167,7 +1168,8 @@ class WizardImportFatturapa(models.TransientModel):
                 FatturaBody.DatiGenerali.DatiGeneraliDocumento.Arrotondamento
             )
 
-    def set_activity_progress(self, FatturaBody, invoice_id):
+    def set_activity_progress(self, FatturaBody, invoice):
+        invoice_id = invoice.id
         SalDatas = FatturaBody.DatiGenerali.DatiSAL
         if SalDatas:
             SalModel = self.env["faturapa.activity.progress"]
@@ -1190,7 +1192,8 @@ class WizardImportFatturapa(models.TransientModel):
         dates.sort(reverse=True)
         return dates
 
-    def set_payments_data(self, FatturaBody, invoice_id, partner_id):
+    def set_payments_data(self, FatturaBody, invoice, partner_id):
+        invoice_id = invoice.id
         PaymentsData = FatturaBody.DatiPagamento
         partner = self.env["res.partner"].browse(partner_id)
         if not partner.property_supplier_payment_term_id:
@@ -1359,7 +1362,8 @@ class WizardImportFatturapa(models.TransientModel):
                 )
             invoice.write(delivery_dict)
 
-    def set_summary_data(self, FatturaBody, invoice_id):
+    def set_summary_data(self, FatturaBody, invoice):
+        invoice_id = invoice.id
         Summary_datas = FatturaBody.DatiBeniServizi.DatiRiepilogo
         summary_data_model = self.env["faturapa.summary.data"]
         if Summary_datas:
@@ -1473,7 +1477,6 @@ class WizardImportFatturapa(models.TransientModel):
         self.ensure_one()
         fatturapa_attachment_obj = self.env["fatturapa.attachment.in"]
         fatturapa_attachment_ids = self.env.context.get("active_ids", False)
-        invoice_model = self.env["account.move"]
         new_invoices = []
         for fatturapa_attachment_id in fatturapa_attachment_ids:
             # XXX - da controllare
@@ -1483,6 +1486,7 @@ class WizardImportFatturapa(models.TransientModel):
             )
             if fatturapa_attachment.in_invoice_ids:
                 raise UserError(_("File is linked to bills yet."))
+
             fatt = self.get_invoice_obj(fatturapa_attachment)
             cedentePrestatore = fatt.FatturaElettronicaHeader.CedentePrestatore
             # 1.2
@@ -1508,10 +1512,10 @@ class WizardImportFatturapa(models.TransientModel):
                 # reset inconsistencies
                 # self.__dict__.update(self.with_context(inconsistencies="").__dict__)
 
-                invoice_id = self.invoiceCreate(
+                invoice = self.invoiceCreate(
                     fatt, fatturapa_attachment, fattura, partner_id
                 )
-                invoice = invoice_model.browse(invoice_id)
+
                 self.set_StabileOrganizzazione(cedentePrestatore, invoice)
                 if TaxRappresentative:
                     tax_partner_id = self.getPartnerBase(
@@ -1521,7 +1525,7 @@ class WizardImportFatturapa(models.TransientModel):
                 if Intermediary:
                     Intermediary_id = self.getPartnerBase(Intermediary.DatiAnagrafici)
                     invoice.write({"intermediary": Intermediary_id})
-                new_invoices.append(invoice_id)
+                new_invoices.append(invoice.id)
                 self.check_invoice_amount(invoice, fattura)
 
                 invoice.set_einvoice_data(fattura)
