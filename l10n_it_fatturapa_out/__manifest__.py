@@ -32,6 +32,8 @@
     "external_dependencies": {
         "python": [
             "unidecode",
+            "elementpath",
+            "xmlschema",
         ],
     },
 }
