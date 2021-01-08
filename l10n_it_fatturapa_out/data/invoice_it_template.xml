@@ -566,6 +566,13 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         t-set="tax_line_ids"
                         t-value="record.line_ids.filtered(lambda line: line.tax_line_id)"
                     />
+                    <t t-if="not tax_line_ids">
+                        <DatiRiepilogo>
+                            <AliquotaIVA>0.00</AliquotaIVA>
+                            <ImponibileImporto>0.00</ImponibileImporto>
+                            <Imposta>0.00</Imposta>
+                        </DatiRiepilogo>
+                    </t>
                     <t t-foreach="tax_line_ids" t-as="tax_line">
                         <t
                             t-call="l10n_it_fatturapa_out.account_invoice_line_it_dati_riepilogo"
