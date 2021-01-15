@@ -5,7 +5,7 @@
         <field name="name">view.causale.pagamento.tree</field>
         <field name="model">causale.pagamento</field>
         <field name="arch" type="xml">
-            <tree string="Causale pagamento">
+            <tree string="Payment Reason">
                 <field name="code" />
                 <field name="name" />
             </tree>
@@ -16,7 +16,7 @@
         <field name="name">view.causale.pagamento.form</field>
         <field name="model">causale.pagamento</field>
         <field name="arch" type="xml">
-            <form string="Causale pagamento">
+            <form string="Payment Reason">
                 <sheet>
                     <group>
                         <field name="code" />
@@ -28,14 +28,14 @@
     </record>
 
     <record id="action_causale_pagamento" model="ir.actions.act_window">
-        <field name="name">Causali pagamento</field>
+        <field name="name">Payment Reasons</field>
         <field name="res_model">causale.pagamento</field>
         <field name="view_id" ref="view_causale_pagamento_tree" />
     </record>
 
     <menuitem
         id="menu_causale_pagamento"
-        name="Causali pagamento"
+        name="Payment Reasons"
         action="action_causale_pagamento"
         parent="l10n_it_account.account_italian_localization"
         groups="account.group_account_manager"
