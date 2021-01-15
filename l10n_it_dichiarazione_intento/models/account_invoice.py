@@ -57,27 +57,16 @@ class AccountInvoice(models.Model):
         ).read()[0]
         return action
 
-    @api.multi
     def action_move_create(self):
         res = super(AccountInvoice, self).action_move_create()
-        dichiarazione_model = self.env["dichiarazione.intento"]
         # ------ Check if there is enough available amount on dichiarazioni
         for invoice in self:
-            if invoice.dichiarazione_intento_ids:
-                dichiarazioni = invoice.dichiarazione_intento_ids
-            else:
-                dichiarazioni = dichiarazione_model.with_context(
-                    ignore_state=True if invoice.type.endswith("_refund") else False
-                ).get_valid(
-                    type_d=invoice.type.split("_")[0],
-                    partner_id=invoice.partner_id.id,
-                    date=invoice.date_invoice,
-                )
+            dichiarazioni = invoice.get_declarations()
             # ----- If partner hasn't dichiarazioni, do nothing
             if not dichiarazioni:
                 # ----  check se posizione fiscale dichiarazione di intento
                 # ---- e non ho dichiarazioni, segnalo errore
-                if self.fiscal_position_id.valid_for_dichiarazione_intento:
+                if invoice.fiscal_position_id.valid_for_dichiarazione_intento:
                     raise UserError(
                         _(
                             "Declaration of intent not found. Add new declaration or "
@@ -86,51 +75,12 @@ class AccountInvoice(models.Model):
                     )
                 else:
                     continue
-            sign = 1 if invoice.type in ["out_invoice", "in_refund"] else -1
-            dichiarazioni_amounts = {}
-            for tax_line in invoice.tax_line_ids:
-                amount = sign * tax_line.base
-                for dichiarazione in dichiarazioni:
-                    if dichiarazione.id not in dichiarazioni_amounts:
-                        dichiarazioni_amounts[
-                            dichiarazione.id
-                        ] = dichiarazione.available_amount
-                    if tax_line.tax_id.id in [t.id for t in dichiarazione.taxes_ids]:
-                        dichiarazioni_amounts[dichiarazione.id] -= amount
-            dichiarazioni_residual = sum(
-                [dichiarazioni_amounts[da] for da in dichiarazioni_amounts]
-            )
-            if dichiarazioni_residual < 0:
-                raise UserError(
-                    _("Available plafond insufficent.\n" "Excess value: %s")
-                    % (abs(dichiarazioni_residual))
-                )
-            # Check se con nota credito ho superato il plafond
-            for dich in dichiarazioni_amounts:
-                dichiarazione = dichiarazione_model.browse(dich)
-                # dichiarazioni_amounts contains residual, so, if > limit_amount,
-                # used_amount went < 0
-                if dichiarazioni_amounts[dich] > dichiarazione.limit_amount:
-                    raise UserError(
-                        _("Available plafond insufficent.\n" "Excess value: %s")
-                        % (
-                            abs(
-                                dichiarazioni_amounts[dich] - dichiarazione.limit_amount
-                            )
-                        )
-                    )
+
+            invoice.check_declarations_amounts(dichiarazioni)
+
         # ----- Assign account move lines to dichiarazione for invoices
         for invoice in self:
-            if invoice.dichiarazione_intento_ids:
-                dichiarazioni = invoice.dichiarazione_intento_ids
-            else:
-                dichiarazioni = dichiarazione_model.with_context(
-                    ignore_state=True if invoice.type.endswith("_refund") else False
-                ).get_valid(
-                    type_d=invoice.type.split("_")[0],
-                    partner_id=invoice.partner_id.id,
-                    date=invoice.date_invoice,
-                )
+            dichiarazioni = invoice.get_declarations()
             # ----- If partner hasn't dichiarazioni, do nothing
             if not dichiarazioni:
                 continue
@@ -139,82 +89,149 @@ class AccountInvoice(models.Model):
             if not lines:
                 continue
             # ----- Group lines for tax
-            grouped_lines = {}
-            sign = -1 if invoice.type.endswith("_refund") else 1
-            # sign = 1 if invoice.type in ('in_invoice', 'out_refund') else -1
-            for line in lines:
-                force_declaration = line.force_dichiarazione_intento_id
-                tax = line.tax_ids[0]
-                if force_declaration not in list(grouped_lines.keys()):
-                    grouped_lines.update({force_declaration: {}})
-                if tax not in grouped_lines[force_declaration]:
-                    grouped_lines[force_declaration].update({tax: []})
-                grouped_lines[force_declaration][tax].append(line)
-            for force_declaration in grouped_lines.keys():
-                for tax, lines in grouped_lines[force_declaration].items():
-                    # ----- Create a detail in dichiarazione
-                    #       for every tax group
-                    if invoice.type in ("out_invoice", "in_refund"):
-                        amount = sum(
-                            [sign * (line.credit - line.debit) for line in lines]
-                        )
-                    else:
-                        amount = sum(
-                            [sign * (line.debit - line.credit) for line in lines]
-                        )
-                    # Select right declaration(s)
-                    if force_declaration:
-                        declarations = [
-                            force_declaration,
-                        ]
-                    else:
-                        declarations = dichiarazioni
-                    for dichiarazione in declarations:
-                        if tax not in dichiarazione.taxes_ids:
-                            continue
-                        dichiarazione.line_ids = [
-                            (
-                                0,
-                                0,
-                                {
-                                    "taxes_ids": [
-                                        (
-                                            6,
-                                            0,
-                                            [
-                                                tax.id,
-                                            ],
-                                        )
-                                    ],
-                                    "move_line_ids": [(6, 0, [l.id for l in lines])],
-                                    "amount": amount,
-                                    "invoice_id": invoice.id,
-                                    "base_amount": invoice.amount_untaxed,
-                                    "currency_id": invoice.currency_id.id,
-                                },
-                            )
-                        ]
-                        # ----- Link dichiarazione to invoice
-                        invoice.dichiarazione_intento_ids = [(4, dichiarazione.id)]
-                        if invoice.type in ("out_invoice", "out_refund"):
-                            if not invoice.comment:
-                                invoice.comment = ""
-                            invoice.comment += (
-                                "\n\nVostra dichiarazione d'intento nr %s del %s, "
-                                "nostro protocollo nr %s del %s, "
-                                "protocollo telematico nr %s."
-                                % (
-                                    dichiarazione.partner_document_number,
-                                    format_date(
-                                        self.env, dichiarazione.partner_document_date
-                                    ),
-                                    dichiarazione.number,
-                                    format_date(self.env, dichiarazione.date),
-                                    dichiarazione.telematic_protocol,
-                                )
-                            )
+            grouped_lines = self.get_move_lines_by_declaration(lines)
+            invoice.update_declarations(dichiarazioni, grouped_lines)
 
         return res
+
+    def update_declarations(self, dichiarazioni, grouped_lines):
+        """
+        Update the declarations adding a new line representing this invoice.
+
+        Also add a comment in this invoice stating which declaration is into.
+        """
+        self.ensure_one()
+        sign = -1 if self.type.endswith("_refund") else 1
+        for force_declaration in grouped_lines.keys():
+            for tax, lines in grouped_lines[force_declaration].items():
+                # ----- Create a detail in dichiarazione
+                #       for every tax group
+                if self.type in ("out_invoice", "in_refund"):
+                    amount = sum(sign * (line.credit - line.debit) for line in lines)
+                else:
+                    amount = sum(sign * (line.debit - line.credit) for line in lines)
+                # Select right declaration(s)
+                if force_declaration:
+                    declarations = [force_declaration]
+                else:
+                    declarations = dichiarazioni
+
+                for dichiarazione in declarations:
+                    if tax not in dichiarazione.taxes_ids:
+                        continue
+                    dichiarazione.line_ids = [
+                        (0, 0, self._prepare_declaration_line(amount, lines, tax)),
+                    ]
+                    # ----- Link dichiarazione to invoice
+                    self.dichiarazione_intento_ids = [(4, dichiarazione.id)]
+                    if self.type in ("out_invoice", "out_refund"):
+                        if not self.comment:
+                            self.comment = ""
+                        self.comment += (
+                            "\n\nVostra dichiarazione d'intento nr %s del %s, "
+                            "nostro protocollo nr %s del %s, "
+                            "protocollo telematico nr %s."
+                            % (
+                                dichiarazione.partner_document_number,
+                                format_date(
+                                    self.env, dichiarazione.partner_document_date
+                                ),
+                                dichiarazione.number,
+                                format_date(self.env, dichiarazione.date),
+                                dichiarazione.telematic_protocol,
+                            )
+                        )
+
+    def _prepare_declaration_line(self, amount, lines, tax):
+        """Dictionary used to create declaration line for this invoice."""
+        self.ensure_one()
+        return {
+            "taxes_ids": [
+                (6, 0, tax.ids),
+            ],
+            "move_line_ids": [
+                (6, 0, lines.ids),
+            ],
+            "amount": amount,
+            "invoice_id": self.id,
+            "base_amount": self.amount_untaxed,
+            "currency_id": self.currency_id.id,
+        }
+
+    @api.model
+    def get_move_lines_by_declaration(self, lines):
+        """Get account move lines grouped by the declaration forced in each line."""
+        grouped_lines = {}
+        for line in lines:
+            force_declaration = line.force_dichiarazione_intento_id
+            tax = line.tax_ids[0]
+            if force_declaration not in list(grouped_lines.keys()):
+                grouped_lines.update({force_declaration: {}})
+            if tax not in grouped_lines[force_declaration]:
+                grouped_lines[force_declaration].update({tax: []})
+            grouped_lines[force_declaration][tax].append(line)
+        return grouped_lines
+
+    def get_declarations(self):
+        """Get declarations linked directly or indirectly to this invoice."""
+        self.ensure_one()
+        dichiarazione_model = self.env["dichiarazione.intento"]
+        if self.dichiarazione_intento_ids:
+            dichiarazioni = self.dichiarazione_intento_ids
+        else:
+            dichiarazioni = dichiarazione_model.with_context(
+                ignore_state=True if self.type.endswith("_refund") else False
+            ).get_valid(
+                type_d=self.type.split("_")[0],
+                partner_id=self.partner_id.id,
+                date=self.date_invoice,
+            )
+        return dichiarazioni
+
+    def check_declarations_amounts(self, declarations):
+        """
+        Compare this invoice's tax amounts and `declarations` plafond.
+
+        An exception is raised if the plafond of the declarations
+        is not sufficient for this invoice's taxes.
+        """
+        self.ensure_one()
+        declarations_amounts = self.get_declaration_residual_amounts(declarations)
+
+        declarations_residual = sum(
+            [declarations_amounts[da] for da in declarations_amounts]
+        )
+        if declarations_residual < 0:
+            raise UserError(
+                _("Available plafond insufficent.\n" "Excess value: %s")
+                % (abs(declarations_residual))
+            )
+
+        # Check se con nota credito ho superato il plafond
+        declaration_model = self.env["dichiarazione.intento"]
+        for dich in declarations_amounts:
+            declaration = declaration_model.browse(dich)
+            # declarations_amounts contains residual, so, if > limit_amount,
+            # used_amount went < 0
+            if declarations_amounts[dich] > declaration.limit_amount:
+                excess = abs(declarations_amounts[dich] - declaration.limit_amount)
+                raise UserError(
+                    _("Available plafond insufficent.\n" "Excess value: %s") % excess
+                )
+        return True
+
+    def get_declaration_residual_amounts(self, declarations):
+        """Get residual amount for every `declarations`."""
+        sign = 1 if self.type in ["out_invoice", "in_refund"] else -1
+        dichiarazioni_amounts = {}
+        for tax_line in self.tax_line_ids:
+            amount = sign * tax_line.base
+            for declaration in declarations:
+                if declaration.id not in dichiarazioni_amounts:
+                    dichiarazioni_amounts[declaration.id] = declaration.available_amount
+                if tax_line.tax_id in declaration.taxes_ids:
+                    dichiarazioni_amounts[declaration.id] -= amount
+        return dichiarazioni_amounts
 
     @api.multi
     def action_invoice_cancel(self):
