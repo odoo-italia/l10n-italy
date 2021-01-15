@@ -49,7 +49,7 @@ class TestDichiarazioneIntento(TransactionCase):
             )
         ]
         return (
-            self.env["account.invoice"]
+            self.env["account.move"]
             .sudo()
             .create(
                 {
@@ -81,7 +81,7 @@ class TestDichiarazioneIntento(TransactionCase):
             )
         ]
         return (
-            self.env["account.invoice"]
+            self.env["account.move"]
             .sudo()
             .create(
                 {

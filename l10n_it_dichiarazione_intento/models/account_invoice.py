@@ -6,9 +6,9 @@ from odoo.exceptions import UserError
 from odoo.tools.misc import format_date
 
 
-class AccountInvoice(models.Model):
+class AccountMove(models.Model):
 
-    _inherit = "account.invoice"
+    _inherit = "account.move"
 
     dichiarazione_intento_ids = fields.Many2many(
         "dichiarazione.intento", string="Declarations of intent"
@@ -45,7 +45,7 @@ class AccountInvoice(models.Model):
 
     @api.onchange("partner_id", "company_id")
     def _onchange_partner_id(self):
-        res = super(AccountInvoice, self)._onchange_partner_id()
+        res = super()._onchange_partner_id()
         self._set_fiscal_position()
         return res
 
@@ -57,7 +57,7 @@ class AccountInvoice(models.Model):
         return action
 
     def action_move_create(self):
-        res = super(AccountInvoice, self).action_move_create()
+        res = super().action_move_create()
         # ------ Check if there is enough available amount on dichiarazioni
         for invoice in self:
             dichiarazioni = invoice.get_declarations()
@@ -242,12 +242,12 @@ class AccountInvoice(models.Model):
                 for line in lines:
                     invoice.dichiarazione_intento_ids = [(3, line.dichiarazione_id.id)]
                 lines.unlink()
-        return super(AccountInvoice, self).action_invoice_cancel()
+        return super().action_invoice_cancel()
 
     @api.model
     def invoice_line_move_line_get(self):
-        move_lines = super(AccountInvoice, self).invoice_line_move_line_get()
-        invoice_line_model = self.env["account.invoice.line"]
+        move_lines = super().invoice_line_move_line_get()
+        invoice_line_model = self.env["account.move.line"]
         for move_line in move_lines:
             inv_line_id = move_line.get("invl_id", False)
             if inv_line_id:
@@ -259,9 +259,9 @@ class AccountInvoice(models.Model):
         return move_lines
 
 
-class AccountInvoiceLine(models.Model):
+class AccountMoveLine(models.Model):
 
-    _inherit = "account.invoice.line"
+    _inherit = "account.move.line"
 
     force_dichiarazione_intento_id = fields.Many2one(
         "dichiarazione.intento", string="Force Declaration of Intent"
