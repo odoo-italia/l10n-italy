@@ -16,11 +16,14 @@ class AccountMove(models.Model):
 
     def _set_fiscal_position(self):
         for invoice in self:
-            if invoice.partner_id and invoice.type:
+            if invoice.partner_id and invoice.move_type:
+                invoice_type_short = invoice.get_type_short()
+                if not invoice_type_short:
+                    continue
                 all_dichiarazioni = self.env[
                     "dichiarazione.intento"
                 ].get_all_for_partner(
-                    invoice.type.split("_")[0],
+                    invoice_type_short,
                     invoice.partner_id.commercial_partner_id.id,
                 )
                 if not all_dichiarazioni:
@@ -38,6 +41,22 @@ class AccountMove(models.Model):
                     d.fiscal_position_id.id for d in all_dichiarazioni
                 ]:
                     invoice.fiscal_position_id = False
+
+    def get_type_short(self):
+        """
+        Get in/out value from the invoice.
+
+        This will then be matched with field dichiarazione.intento.type.
+        For instance:
+        an invoice of type `in_refund` returns `in`,
+        an invoice of type `out_refund` returns `out`,
+        an invoice of type `entry` returns ``.
+        """
+        self.ensure_one()
+        invoice_type_short = ""
+        if "_" in self.move_type:
+            invoice_type_short = self.move_type.split("_")[0]
+        return invoice_type_short
 
     @api.onchange("date")
     def _onchange_date_invoice(self):
@@ -100,12 +119,12 @@ class AccountMove(models.Model):
         Also add a comment in this invoice stating which declaration is into.
         """
         self.ensure_one()
-        sign = -1 if self.type.endswith("_refund") else 1
+        sign = -1 if self.move_type.endswith("_refund") else 1
         for force_declaration in grouped_lines.keys():
             for tax, lines in grouped_lines[force_declaration].items():
                 # ----- Create a detail in dichiarazione
                 #       for every tax group
-                if self.type in ("out_invoice", "in_refund"):
+                if self.move_type in ("out_invoice", "in_refund"):
                     amount = sum(sign * (line.credit - line.debit) for line in lines)
                 else:
                     amount = sum(sign * (line.debit - line.credit) for line in lines)
@@ -123,7 +142,7 @@ class AccountMove(models.Model):
                     ]
                     # ----- Link dichiarazione to invoice
                     self.dichiarazione_intento_ids = [(4, dichiarazione.id)]
-                    if self.type in ("out_invoice", "out_refund"):
+                    if self.move_type in ("out_invoice", "out_refund"):
                         if not self.comment:
                             self.comment = ""
                         self.comment += (
@@ -179,9 +198,9 @@ class AccountMove(models.Model):
             dichiarazioni = self.dichiarazione_intento_ids
         else:
             dichiarazioni = dichiarazione_model.with_context(
-                ignore_state=True if self.type.endswith("_refund") else False
+                ignore_state=True if self.move_type.endswith("_refund") else False
             ).get_valid(
-                type_d=self.type.split("_")[0],
+                type_d=self.move_type.split("_")[0],
                 partner_id=self.partner_id.id,
                 date=self.date,
             )
@@ -221,7 +240,7 @@ class AccountMove(models.Model):
 
     def get_declaration_residual_amounts(self, declarations):
         """Get residual amount for every `declarations`."""
-        sign = 1 if self.type in ["out_invoice", "in_refund"] else -1
+        sign = 1 if self.move_type in ["out_invoice", "in_refund"] else -1
         dichiarazioni_amounts = {}
         for tax_line in self.tax_line_ids:
             amount = sign * tax_line.base
@@ -269,7 +288,7 @@ class AccountMoveLine(models.Model):
 
     def _compute_tax_id(self):
         for line in self:
-            invoice_type = line.invoice_id.type
+            invoice_type = line.invoice_id.move_type
             fpos = (
                 line.invoice_id.fiscal_position_id
                 or line.invoice_id.partner_id.property_account_position_id

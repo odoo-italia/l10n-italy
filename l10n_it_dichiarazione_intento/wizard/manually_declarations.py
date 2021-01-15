@@ -14,9 +14,12 @@ class SelectManuallyDeclarations(models.TransientModel):
         if not invoice_id:
             return []
         invoice = self.env["account.move"].browse(invoice_id)
+        type_short = invoice.get_type_short()
+        if not type_short:
+            return []
         domain = [
             ("partner_id", "=", invoice.partner_id.commercial_partner_id.id),
-            ("type", "=", invoice.type.split("_")[0]),
+            ("type", "=", type_short),
             ("date_start", "<=", invoice.date),
             ("date_end", ">=", invoice.date),
         ]
