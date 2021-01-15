@@ -44,7 +44,7 @@ class TestDichiarazioneIntento(TransactionCase):
                     "account_id": self.a_sale.id,
                     "name": "test line",
                     "price_unit": 90.00,
-                    "invoice_line_tax_ids": [(6, 0, [tax.id])] if tax else False,
+                    "tax_ids": [(6, 0, [tax.id])] if tax else False,
                 },
             )
         ]
@@ -55,47 +55,29 @@ class TestDichiarazioneIntento(TransactionCase):
                 {
                     "partner_id": partner.id,
                     "date": invoice_date,
-                    "type": "out_invoice",
+                    "move_type": "out_invoice",
                     "name": "Test Invoice for Dichiarazione",
-                    "payment_term_id": payment_term.id,
-                    "account_id": self.account.id,
+                    "invoice_payment_term_id": payment_term.id,
                     "invoice_line_ids": invoice_line_data,
                 }
             )
         )
 
-    def _create_refund(self, partner, tax=False, date=False, invoice=False):
-        invoice_date = date if date else self.today_date
-        payment_term = self.env.ref("account.account_payment_term_advance")
-        invoice_line_data = [
-            (
-                0,
-                0,
-                {
-                    "quantity": 1.00,
-                    "account_id": self.a_sale.id,
-                    "name": "test refund line",
-                    "price_unit": 100.00,
-                    "invoice_line_tax_ids": [(6, 0, [tax.id])] if tax else False,
-                },
-            )
-        ]
-        return (
-            self.env["account.move"]
-            .sudo()
+    def _create_refund(self, invoice):
+        invoice.action_post()
+        move_reversal = (
+            self.env["account.move.reversal"]
+            .with_context(active_model="account.move", active_ids=invoice.ids)
             .create(
                 {
-                    "partner_id": partner.id,
-                    "date": invoice_date,
-                    "type": "out_refund",
-                    "name": "Test Refund for Dichiarazione",
-                    "payment_term_id": payment_term.id,
-                    "account_id": self.account.id,
-                    "invoice_line_ids": invoice_line_data,
-                    "refund_invoice_id": invoice.id,
+                    "date": fields.Date.from_string("2019-02-01"),
+                    "reason": "test declaration intent",
+                    "refund_method": "refund",
                 }
             )
         )
+        reversal = move_reversal.reverse_moves()
+        return self.env["account.move"].browse(reversal["res_id"])
 
     def setUp(self):
 
@@ -215,7 +197,6 @@ class TestDichiarazioneIntento(TransactionCase):
         self.dichiarazione2 = self._create_dichiarazione(self.partner2, "out")
         self.dichiarazione3 = self._create_dichiarazione(self.partner2, "out")
         self.invoice1 = self._create_invoice(self.partner1)
-        self.invoice1.journal_id.update_posted = True
         self.invoice2 = self._create_invoice(self.partner1, tax=self.tax1)
         self.invoice3 = self._create_invoice(self.partner1, tax=self.tax1)
         self.invoice_without_valid_taxes = self._create_invoice(
@@ -226,9 +207,7 @@ class TestDichiarazioneIntento(TransactionCase):
         self.invoice_future = self._create_invoice(
             self.partner1, date=future_date, tax=self.tax1
         )
-        self.refund1 = self._create_refund(
-            self.partner1, tax=self.tax1, invoice=self.invoice2
-        )
+        self.refund1 = self._create_refund(self.invoice2)
         self.invoice4 = self._create_invoice(self.partner3, tax=self.tax22)
         self.invoice4.fiscal_position_id = self.fiscal_position2.id
 
@@ -247,11 +226,11 @@ class TestDichiarazioneIntento(TransactionCase):
         records = dichiarazione_model.get_valid(
             type_d="out", partner_id=self.partner1.id, date=self.today_date
         )
-        self.assertEquals(len(records), 1)
+        self.assertEqual(len(records), 1)
         records = dichiarazione_model.get_valid(
             type_d="out", partner_id=self.partner2.id, date=self.today_date
         )
-        self.assertEquals(len(records), 2)
+        self.assertEqual(len(records), 2)
 
     def test_dichiarazione_state_change(self):
         self.assertEqual(self.dichiarazione1.state, "valid")
@@ -267,50 +246,50 @@ class TestDichiarazioneIntento(TransactionCase):
 
     def test_invoice_validation_with_no_effect_on_dichiarazione(self):
         previous_used_amount = self.dichiarazione1.used_amount
-        self.invoice1.action_invoice_open()
+        self.invoice1.action_post()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertEqual(previous_used_amount, post_used_amount)
-        self.invoice_future.action_invoice_open()
+        self.invoice_future.action_post()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertEqual(previous_used_amount, post_used_amount)
-        self.invoice_without_valid_taxes.action_invoice_open()
+        self.invoice_without_valid_taxes.action_post()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertEqual(previous_used_amount, post_used_amount)
 
     def test_invoice_reopen_with_no_effect_on_dichiarazione(self):
         previous_used_amount = self.dichiarazione1.used_amount
-        self.invoice1.action_invoice_open()
-        self.invoice1.action_invoice_cancel()
+        self.invoice1.action_post()
+        self.invoice1.button_cancel()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertEqual(previous_used_amount, post_used_amount)
 
     def test_invoice_validation_under_dichiarazione_limit(self):
         previous_used_amount = self.dichiarazione1.used_amount
-        self.invoice2.action_invoice_open()
+        self.invoice2.action_post()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertNotEqual(previous_used_amount, post_used_amount)
 
     def test_invoice_validation_over_dichiarazione_limit(self):
-        self.invoice2.action_invoice_open()
+        self.invoice2.action_post()
         with self.assertRaises(UserError):
-            self.invoice3.action_invoice_open()
+            self.invoice3.action_post()
 
     def test_invoice_reopen_with_effect_on_dichiarazione(self):
         previous_used_amount = self.dichiarazione1.used_amount
-        self.invoice2.action_invoice_open()
-        self.invoice2.action_invoice_cancel()
+        self.invoice2.action_post()
+        self.invoice2.button_cancel()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertEqual(previous_used_amount, post_used_amount)
 
     def test_refund(self):
-        self.invoice2.action_invoice_open()
+        self.invoice2.action_post()
         previous_used_amount = self.dichiarazione1.used_amount
-        self.refund1.action_invoice_open()
+        self.refund1.action_post()
         post_used_amount = self.dichiarazione1.used_amount
         self.assertNotEqual(previous_used_amount, post_used_amount)
 
     def test_refund_with_amount_bigger_than_residual(self):
-        self.invoice2.action_invoice_open()
+        self.invoice2.action_post()
         self.refund1.invoice_line_ids[0].quantity = 10
 
         # Check that base amount has been updated
@@ -323,7 +302,7 @@ class TestDichiarazioneIntento(TransactionCase):
         self.assertEqual(self.refund1.amount_untaxed, 1000)
         self.assertEqual(self.dichiarazione1.limit_amount, 1000)
         with self.assertRaises(UserError):
-            self.refund1.action_invoice_open()
+            self.refund1.action_post()
 
     def test_fiscal_position_no_dichiarazione(self):
         self.invoice4._onchange_date_invoice()

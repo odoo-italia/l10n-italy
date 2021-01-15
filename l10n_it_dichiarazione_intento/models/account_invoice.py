@@ -251,7 +251,7 @@ class AccountMove(models.Model):
                     dichiarazioni_amounts[declaration.id] -= amount
         return dichiarazioni_amounts
 
-    def action_invoice_cancel(self):
+    def button_cancel(self):
         line_model = self.env["dichiarazione.intento.line"]
         for invoice in self:
             # ----- Force unlink of dichiarazione details to compute used
@@ -261,7 +261,7 @@ class AccountMove(models.Model):
                 for line in lines:
                     invoice.dichiarazione_intento_ids = [(3, line.dichiarazione_id.id)]
                 lines.unlink()
-        return super().action_invoice_cancel()
+        return super().button_cancel()
 
     @api.model
     def invoice_line_move_line_get(self):
