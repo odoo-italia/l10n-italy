@@ -19,7 +19,6 @@ class DichiarazioneIntentoYearlyLimit(models.Model):
     limit_amount = fields.Float()
     used_amount = fields.Float(compute="_compute_used_amount")
 
-    @api.multi
     def _compute_used_amount(self):
         for record in self:
             date_start = datetime.strptime("01-01-{}".format(record.year), "%d-%m-%Y")
