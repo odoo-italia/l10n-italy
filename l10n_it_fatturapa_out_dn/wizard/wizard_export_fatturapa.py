@@ -11,7 +11,7 @@ class WizardExportFatturapa(models.TransientModel):
     def default_get(self, fields):
         res = super(WizardExportFatturapa, self).default_get(fields)
         invoice_ids = self.env.context.get("active_ids", False)
-        invoices = self.env["account.invoice"].browse(invoice_ids)
+        invoices = self.env["account.move"].browse(invoice_ids)
         for invoice in invoices:
             for line in invoice.invoice_line_ids:
                 if line.delivery_note_id:
