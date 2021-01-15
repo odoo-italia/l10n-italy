@@ -3,6 +3,6 @@ asn1crypto
 codicefiscale
 asn1crypto
 PyXB >= 1.2.6
-unidecode
 elementpath
+unidecode
 xmlschema

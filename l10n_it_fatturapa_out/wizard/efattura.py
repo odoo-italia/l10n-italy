@@ -4,6 +4,7 @@ import logging
 import os
 from datetime import datetime
 
+import xmlschema
 from lxml import etree
 from unidecode import unidecode
 
@@ -19,39 +20,32 @@ _logger = logging.getLogger(__name__)
 # from from odoo.addons.l10n_it_fatturapa import FPAValidator
 
 
-class FPAValidator(etree.XMLSchema):
+# fix <xs:import namespace="http://www.w3.org/2000/09/xmldsig#"
+#      schemaLocation="http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd" /> # noqa: B950
+class FPAValidator:
 
     _XSD_SCHEMA = "Schema_del_file_xml_FatturaPA_versione_1.2.1.xsd"
     _xml_schema_1_2_1 = get_module_resource(
         "l10n_it_fatturapa", "bindings", "xsd", _XSD_SCHEMA
     )
-
-    # fix <xs:import namespace="http://www.w3.org/2000/09/xmldsig#"
-    #      schemaLocation="http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd" /> # noqa: B950
-    class VeryOldXSDSpecResolverTYVMSdI(etree.Resolver):
-
-        _old_xsd_specs = get_module_resource(
-            "l10n_it_fatturapa", "bindings", "xsd", "xmldsig-core-schema.xsd"
-        )
-
-        def resolve(self, system_url, public_id, context):
-            if (
-                system_url
-                == "http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd"  # noqa: B950
-            ):
-                _logger.info(
-                    "mapping URL for %r to local file %r",
-                    system_url,
-                    self._old_xsd_specs,
-                )
-                return self.resolve_filename(self._old_xsd_specs, context)
-            else:
-                return super().resolve(system_url, public_id, context)
+    _old_xsd_specs = get_module_resource(
+        "l10n_it_fatturapa", "bindings", "xsd", "xmldsig-core-schema.xsd"
+    )
 
     def __init__(self):
-        _parser = etree.XMLParser()
-        _parser.resolvers.add(self.VeryOldXSDSpecResolverTYVMSdI())
-        super().__init__(etree=etree.parse(self._xml_schema_1_2_1, _parser))
+        self.error_log = []
+        locations = {"http://www.w3.org/2000/09/xmldsig#": self._old_xsd_specs}
+        self._validator = xmlschema.XMLSchema(
+            self._xml_schema_1_2_1,
+            locations=locations,
+            validation="lax",
+            allow="local",
+            loglevel=20,
+        )
+
+    def __call__(self, *args, **kwargs):
+        self.error_log = list(self._validator.iter_errors(*args, **kwargs))
+        return not self.error_log
 
 
 DEFAULT_INVOICE_ITALIAN_DATE_FORMAT = "%Y-%m-%d"
@@ -201,6 +195,7 @@ class EFatturaOut:
             "codice_destinatario": code.upper(),
             "in_eu": in_eu,
             "unidecode": unidecode,
+            "wizard": self.wizard,
             # "base64": base64,
         }
         content = env.ref(
@@ -213,12 +208,15 @@ class EFatturaOut:
         if not ok:
             # XXX - da migliorare?
             # i controlli precedenti dovrebbero escludere errori di sintassi XML
+            # with open("/tmp/fatturaout.xml", "wb") as o:
+            #    o.write(etree.tostring(root, xml_declaration=True, encoding="utf-8"))
             raise UserError("\n".join(e.message for e in errors))
         content = etree.tostring(root, xml_declaration=True, encoding="utf-8")
         return content
 
-    def __init__(self, company_id, partner_id, invoices, progressivo_invio):
-        self.company_id = company_id
+    def __init__(self, wizard, partner_id, invoices, progressivo_invio):
+        self.wizard = wizard
+        self.company_id = wizard.env.company
         self.partner_id = partner_id
         self.invoices = invoices
         self.progressivo_invio = progressivo_invio
