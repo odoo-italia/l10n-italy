@@ -1,7 +1,7 @@
 # Copyright 2019 Francesco Apruzzese <francescoapruzzese@openforce.it>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/lgpl).
 
-from odoo import api, fields, models
+from odoo import fields, models
 
 
 class SelectManuallyDeclarations(models.TransientModel):
@@ -28,7 +28,6 @@ class SelectManuallyDeclarations(models.TransientModel):
         default=_default_declaration,
     )
 
-    @api.multi
     def confirm(self):
         self.ensure_one()
         res = True

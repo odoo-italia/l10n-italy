@@ -124,7 +124,6 @@ class DichiarazioneIntento(models.Model):
             )
         return super(DichiarazioneIntento, self).create(values)
 
-    @api.multi
     def unlink(self):
         for record in self:
             if record.line_ids:
@@ -134,7 +133,6 @@ class DichiarazioneIntento(models.Model):
         return super(DichiarazioneIntento, self).unlink()
 
     @api.constrains("fiscal_position_id", "taxes_ids")
-    @api.multi
     def _check_taxes_for_dichiarazione_intento(self):
         for dichiarazione in self:
             if (
@@ -155,7 +153,6 @@ class DichiarazioneIntento(models.Model):
                         )
 
     @api.constrains("limit_amount", "used_amount", "line_ids")
-    @api.multi
     def _check_available_amount(self):
         for dichiarazione in self:
             if dichiarazione.available_amount < 0:
@@ -171,7 +168,6 @@ class DichiarazioneIntento(models.Model):
                     )
                 )
 
-    @api.multi
     def name_get(self):
         res = []
         for record in self:
@@ -186,7 +182,6 @@ class DichiarazioneIntento(models.Model):
             )
         return res
 
-    @api.multi
     @api.depends("line_ids", "line_ids.amount", "limit_amount")
     def _compute_amounts(self):
         for record in self:
@@ -197,7 +192,6 @@ class DichiarazioneIntento(models.Model):
             record.used_amount = amount
             record.available_amount = record.limit_amount - record.used_amount
 
-    @api.multi
     @api.depends("used_amount", "limit_amount", "date_end", "force_close")
     def _compute_state(self):
         for record in self:
@@ -230,7 +224,6 @@ class DichiarazioneIntento(models.Model):
         if taxes:
             self.taxes_ids = [(6, 0, taxes.ids)]
 
-    @api.multi
     def change_force_close(self):
         for record in self:
             record.force_close = not record.force_close

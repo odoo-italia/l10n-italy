@@ -14,7 +14,6 @@ class AccountInvoice(models.Model):
         "dichiarazione.intento", string="Declarations of intent"
     )
 
-    @api.multi
     def _set_fiscal_position(self):
         for invoice in self:
             if invoice.partner_id and invoice.type:
@@ -233,7 +232,6 @@ class AccountInvoice(models.Model):
                     dichiarazioni_amounts[declaration.id] -= amount
         return dichiarazioni_amounts
 
-    @api.multi
     def action_invoice_cancel(self):
         line_model = self.env["dichiarazione.intento.line"]
         for invoice in self:
@@ -269,7 +267,6 @@ class AccountInvoiceLine(models.Model):
         "dichiarazione.intento", string="Force Declaration of Intent"
     )
 
-    @api.multi
     def _compute_tax_id(self):
         for line in self:
             invoice_type = line.invoice_id.type
