@@ -195,6 +195,7 @@ class EFatturaOut:
             "codice_destinatario": code.upper(),
             "in_eu": in_eu,
             "unidecode": unidecode,
+            "wizard": self.wizard,
             # "base64": base64,
         }
         content = env.ref(
@@ -213,8 +214,9 @@ class EFatturaOut:
         content = etree.tostring(root, xml_declaration=True, encoding="utf-8")
         return content
 
-    def __init__(self, company_id, partner_id, invoices, progressivo_invio):
-        self.company_id = company_id
+    def __init__(self, wizard, partner_id, invoices, progressivo_invio):
+        self.wizard = wizard
+        self.company_id = wizard.env.company_id
         self.partner_id = partner_id
         self.invoices = invoices
         self.progressivo_invio = progressivo_invio

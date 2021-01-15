@@ -105,9 +105,7 @@ class WizardExportFatturapa(models.TransientModel):
             for invoice in invoice_ids:
                 invoice.set_taxes_for_descriptive_lines()
 
-            fatturapa = EFatturaOut(
-                self.env.company, partner, invoice_ids, progressivo_invio
-            )
+            fatturapa = EFatturaOut(self, partner, invoice_ids, progressivo_invio)
 
             attach = self.saveAttachment(fatturapa, progressivo_invio)
             attachments |= attach
