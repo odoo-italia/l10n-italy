@@ -216,7 +216,7 @@ class EFatturaOut:
 
     def __init__(self, wizard, partner_id, invoices, progressivo_invio):
         self.wizard = wizard
-        self.company_id = wizard.env.company_id
+        self.company_id = wizard.env.company
         self.partner_id = partner_id
         self.invoices = invoices
         self.progressivo_invio = progressivo_invio
