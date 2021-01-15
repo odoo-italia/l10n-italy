@@ -25,7 +25,7 @@ class AccountMove(models.Model):
                 )
                 if not all_dichiarazioni:
                     return
-                valid_date = invoice.date_invoice or fields.Date.context_today(invoice)
+                valid_date = invoice.date or fields.Date.context_today(invoice)
 
                 dichiarazioni_valide = all_dichiarazioni.filtered(
                     lambda d: d.date_start <= valid_date <= d.date_end
@@ -39,7 +39,7 @@ class AccountMove(models.Model):
                 ]:
                     invoice.fiscal_position_id = False
 
-    @api.onchange("date_invoice")
+    @api.onchange("date")
     def _onchange_date_invoice(self):
         self._set_fiscal_position()
 
@@ -183,7 +183,7 @@ class AccountMove(models.Model):
             ).get_valid(
                 type_d=self.type.split("_")[0],
                 partner_id=self.partner_id.id,
-                date=self.date_invoice,
+                date=self.date,
             )
         return dichiarazioni
 

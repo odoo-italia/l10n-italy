@@ -262,5 +262,5 @@ class DichiarazioneIntentoLine(models.Model):
     amount = fields.Monetary()
     base_amount = fields.Monetary(string="Base Amount")
     invoice_id = fields.Many2one("account.move", string="Invoice")
-    date_invoice = fields.Date(related="invoice_id.date_invoice", string="Date Invoice")
+    date_invoice = fields.Date(related="invoice_id.date", string="Date Invoice")
     currency_id = fields.Many2one("res.currency", string="Currency")

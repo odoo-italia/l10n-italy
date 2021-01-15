@@ -54,7 +54,7 @@ class TestDichiarazioneIntento(TransactionCase):
             .create(
                 {
                     "partner_id": partner.id,
-                    "date_invoice": invoice_date,
+                    "date": invoice_date,
                     "type": "out_invoice",
                     "name": "Test Invoice for Dichiarazione",
                     "payment_term_id": payment_term.id,
@@ -86,7 +86,7 @@ class TestDichiarazioneIntento(TransactionCase):
             .create(
                 {
                     "partner_id": partner.id,
-                    "date_invoice": invoice_date,
+                    "date": invoice_date,
                     "type": "out_refund",
                     "name": "Test Refund for Dichiarazione",
                     "payment_term_id": payment_term.id,
