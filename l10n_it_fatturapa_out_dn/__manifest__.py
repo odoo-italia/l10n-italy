@@ -10,13 +10,13 @@
     "website": "https://github.com/OCA/l10n-italy" "l10n_it_fatturapa_out",
     "license": "AGPL-3",
     "depends": [
+        "l10n_it_fatturapa",
         "l10n_it_fatturapa_out",
         "l10n_it_delivery_note",
     ],
     "data": [
         "data/invoice_it_template.xml",
         "security/ir.model.access.csv",
-        "security/rules.xml",
         "wizard/wizard_export_fatturapa_view.xml",
     ],
     "installable": True,
