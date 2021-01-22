@@ -269,20 +269,6 @@ class AccountMove(models.Model):
                 lines.unlink()
         return super().button_cancel()
 
-    @api.model
-    def invoice_line_move_line_get(self):
-        move_lines = super().invoice_line_move_line_get()
-        invoice_line_model = self.env["account.move.line"]
-        for move_line in move_lines:
-            inv_line_id = move_line.get("invl_id", False)
-            if inv_line_id:
-                inv_line = invoice_line_model.browse(inv_line_id)
-                if inv_line.force_dichiarazione_intento_id:
-                    move_line[
-                        "force_dichiarazione_intento_id"
-                    ] = inv_line.force_dichiarazione_intento_id.id
-        return move_lines
-
 
 class AccountMoveLine(models.Model):
 
