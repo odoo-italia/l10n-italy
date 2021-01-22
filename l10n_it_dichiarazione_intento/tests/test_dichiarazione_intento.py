@@ -5,79 +5,74 @@ from datetime import datetime, timedelta
 
 from odoo import fields
 from odoo.exceptions import UserError, ValidationError
-from odoo.tests.common import TransactionCase
+from odoo.tests.common import Form, TransactionCase
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 
 class TestDichiarazioneIntento(TransactionCase):
     def _create_dichiarazione(self, partner, type_d):
-        return (
-            self.env["dichiarazione.intento"]
-            .sudo()
-            .create(
-                {
-                    "partner_id": partner.id,
-                    "partner_document_number": "PartnerTest%s" % partner.id,
-                    "partner_document_date": self.today_date,
-                    "date": self.today_date,
-                    "date_start": self.today_date,
-                    "date_end": self.today_date,
-                    "taxes_ids": [(6, 0, [self.tax1.id])],
-                    "limit_amount": 1000.00,
-                    "fiscal_position_id": self.fiscal_position.id,
-                    "type": type_d,
-                    "telematic_protocol": "08060120341234567-000001",
-                }
-            )
+        return self.env["dichiarazione.intento"].create(
+            {
+                "partner_id": partner.id,
+                "partner_document_number": "PartnerTest%s" % partner.id,
+                "partner_document_date": self.today_date,
+                "date": self.today_date,
+                "date_start": self.today_date,
+                "date_end": self.today_date,
+                "taxes_ids": [(6, 0, [self.tax1.id])],
+                "limit_amount": 1000.00,
+                "fiscal_position_id": self.fiscal_position.id,
+                "type": type_d,
+                "telematic_protocol": "08060120341234567-000001",
+            }
         )
 
     def _create_invoice(self, partner, tax=False, date=False):
-        invoice_date = date if date else self.today_date
-        payment_term = self.env.ref("account.account_payment_term_advance")
-        invoice_line_data = [
-            (
-                0,
-                0,
-                {
-                    "product_id": self.env.ref("product.product_product_5").id,
-                    "quantity": 10.00,
-                    "account_id": self.a_sale.id,
-                    "name": "test line",
-                    "price_unit": 90.00,
-                    "tax_ids": [(6, 0, [tax.id])] if tax else False,
-                },
-            )
-        ]
-        return (
-            self.env["account.move"]
-            .sudo()
-            .create(
-                {
-                    "partner_id": partner.id,
-                    "date": invoice_date,
-                    "move_type": "out_invoice",
-                    "name": "Test Invoice for Dichiarazione",
-                    "invoice_payment_term_id": payment_term.id,
-                    "invoice_line_ids": invoice_line_data,
-                }
-            )
+        invoice_form = Form(
+            self.env["account.move"].with_context(default_move_type="out_invoice")
+        )
+        invoice_form.partner_id = partner
+        invoice_form.date = date if date else self.today_date
+        invoice_form.name = "Test Invoice for Dichiarazione"
+        invoice_form.invoice_payment_term_id = self.env.ref(
+            "account.account_payment_term_advance"
         )
 
-    def _create_refund(self, invoice):
-        invoice.action_post()
-        move_reversal = (
-            self.env["account.move.reversal"]
-            .with_context(active_model="account.move", active_ids=invoice.ids)
-            .create(
-                {
-                    "date": fields.Date.from_string("2019-02-01"),
-                    "reason": "test declaration intent",
-                    "refund_method": "refund",
-                }
-            )
+        with invoice_form.invoice_line_ids.new() as invoice_line:
+            invoice_line.product_id = self.env.ref("product.product_product_5")
+            invoice_line.quantity = 10.00
+            invoice_line.account_id = self.a_sale
+            invoice_line.name = "test line"
+            invoice_line.price_unit = 90.00
+            if tax:
+                invoice_line.tax_ids.clear()
+                invoice_line.tax_ids.add(tax)
+
+        invoice = invoice_form.save()
+        return invoice
+
+    def _create_refund(self, partner, tax=False, date=False, invoice=False):
+        refund_form = Form(
+            self.env["account.move"].with_context(default_move_type="out_refund")
         )
-        reversal = move_reversal.reverse_moves()
-        return self.env["account.move"].browse(reversal["res_id"])
+        refund_form.partner_id = partner
+        refund_form.name = "Test Refund for Dichiarazione"
+        refund_form.invoice_date = date if date else self.today_date
+        refund_form.invoice_payment_term_id = self.env.ref(
+            "account.account_payment_term_advance"
+        )
+
+        with refund_form.invoice_line_ids.new() as refund_line:
+            refund_line.quantity = 1.00
+            refund_line.account_id = self.a_sale
+            refund_line.name = "test refund line"
+            refund_line.price_unit = 100.00
+            if tax:
+                refund_line.tax_ids.clear()
+                refund_line.tax_ids.add(tax)
+
+        refund = refund_form.save()
+        return refund
 
     def setUp(self):
 
@@ -132,65 +127,55 @@ class TestDichiarazioneIntento(TransactionCase):
                 "price_include": True,
             }
         )
-        self.fiscal_position = (
-            self.env["account.fiscal.position"]
-            .sudo()
-            .create(
-                {
-                    "name": "Dichiarazione Test",
-                    "valid_for_dichiarazione_intento": True,
-                    "tax_ids": [
-                        (
-                            0,
-                            0,
-                            {
-                                "tax_src_id": self.tax10.id,
-                                "tax_dest_id": self.tax1.id,
-                            },
-                        )
-                    ],
-                }
-            )
+        self.fiscal_position = self.env["account.fiscal.position"].create(
+            {
+                "name": "Dichiarazione Test",
+                "valid_for_dichiarazione_intento": True,
+                "tax_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "tax_src_id": self.tax10.id,
+                            "tax_dest_id": self.tax1.id,
+                        },
+                    )
+                ],
+            }
         )
-        self.fiscal_position_with_wrong_taxes = (
-            self.env["account.fiscal.position"]
-            .sudo()
-            .create(
-                {
-                    "name": "Dichiarazione Test Wrong",
-                    "valid_for_dichiarazione_intento": True,
-                    "tax_ids": [
-                        (
-                            0,
-                            0,
-                            {
-                                "tax_src_id": self.tax10.id,
-                                "tax_dest_id": self.tax22.id,
-                            },
-                        )
-                    ],
-                }
-            )
+        self.fiscal_position_with_wrong_taxes = self.env[
+            "account.fiscal.position"
+        ].create(
+            {
+                "name": "Dichiarazione Test Wrong",
+                "valid_for_dichiarazione_intento": True,
+                "tax_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "tax_src_id": self.tax10.id,
+                            "tax_dest_id": self.tax22.id,
+                        },
+                    )
+                ],
+            }
         )
-        self.fiscal_position2 = (
-            self.env["account.fiscal.position"]
-            .sudo()
-            .create(
-                {
-                    "name": "Dichiarazione Test 2",
-                    "valid_for_dichiarazione_intento": False,
-                    "tax_ids": [
-                        (
-                            0,
-                            0,
-                            {
-                                "tax_src_id": self.tax22.id,
-                                "tax_dest_id": self.tax10.id,
-                            },
-                        )
-                    ],
-                }
-            )
+        self.fiscal_position2 = self.env["account.fiscal.position"].create(
+            {
+                "name": "Dichiarazione Test 2",
+                "valid_for_dichiarazione_intento": False,
+                "tax_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "tax_src_id": self.tax22.id,
+                            "tax_dest_id": self.tax10.id,
+                        },
+                    )
+                ],
+            }
         )
 
         self.dichiarazione1 = self._create_dichiarazione(self.partner1, "out")
@@ -207,7 +192,9 @@ class TestDichiarazioneIntento(TransactionCase):
         self.invoice_future = self._create_invoice(
             self.partner1, date=future_date, tax=self.tax1
         )
-        self.refund1 = self._create_refund(self.invoice2)
+        self.refund1 = self._create_refund(
+            self.partner1, tax=self.tax1, invoice=self.invoice2
+        )
         self.invoice4 = self._create_invoice(self.partner3, tax=self.tax22)
         self.invoice4.fiscal_position_id = self.fiscal_position2.id
 
@@ -221,7 +208,7 @@ class TestDichiarazioneIntento(TransactionCase):
             )
 
     def test_get_valid(self):
-        dichiarazione_model = self.env["dichiarazione.intento"].sudo()
+        dichiarazione_model = self.env["dichiarazione.intento"]
         self.assertFalse(dichiarazione_model.get_valid())
         records = dichiarazione_model.get_valid(
             type_d="out", partner_id=self.partner1.id, date=self.today_date
@@ -290,7 +277,10 @@ class TestDichiarazioneIntento(TransactionCase):
 
     def test_refund_with_amount_bigger_than_residual(self):
         self.invoice2.action_post()
-        self.refund1.invoice_line_ids[0].quantity = 10
+        refund_form = Form(self.refund1)
+        with refund_form.invoice_line_ids.edit(0) as line_form:
+            line_form.quantity = 10
+        refund_form.save()
 
         # Check that base amount has been updated
         self.assertNotEqual(self.refund1.tax_line_ids[0].base, 1000)
