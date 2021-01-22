@@ -75,8 +75,8 @@ class AccountMove(models.Model):
         ).read()[0]
         return action
 
-    def action_move_create(self):
-        res = super().action_move_create()
+    def action_post(self):
+        res = super().action_post()
         # ------ Check if there is enough available amount on dichiarazioni
         for invoice in self:
             dichiarazioni = invoice.get_declarations()
@@ -103,7 +103,7 @@ class AccountMove(models.Model):
             if not dichiarazioni:
                 continue
             # ----- Get only lines with taxes
-            lines = invoice.move_id.line_ids.filtered(lambda l: l.tax_ids)
+            lines = invoice.line_ids.filtered(lambda l: l.tax_ids)
             if not lines:
                 continue
             # ----- Group lines for tax
@@ -143,9 +143,9 @@ class AccountMove(models.Model):
                     # ----- Link dichiarazione to invoice
                     self.dichiarazione_intento_ids = [(4, dichiarazione.id)]
                     if self.move_type in ("out_invoice", "out_refund"):
-                        if not self.comment:
-                            self.comment = ""
-                        self.comment += (
+                        if not self.narration:
+                            self.narration = ""
+                        self.narration += (
                             "\n\nVostra dichiarazione d'intento nr %s del %s, "
                             "nostro protocollo nr %s del %s, "
                             "protocollo telematico nr %s."
@@ -180,14 +180,19 @@ class AccountMove(models.Model):
     def get_move_lines_by_declaration(self, lines):
         """Get account move lines grouped by the declaration forced in each line."""
         grouped_lines = {}
+        invoice_line_model = self.env["account.move.line"]
         for line in lines:
             force_declaration = line.force_dichiarazione_intento_id
-            tax = line.tax_ids[0]
-            if force_declaration not in list(grouped_lines.keys()):
+            if force_declaration not in grouped_lines:
                 grouped_lines.update({force_declaration: {}})
+
+            tax = line.tax_ids[0]
             if tax not in grouped_lines[force_declaration]:
-                grouped_lines[force_declaration].update({tax: []})
-            grouped_lines[force_declaration][tax].append(line)
+                grouped_lines[force_declaration].update(
+                    {tax: invoice_line_model.browse()}
+                )
+
+            grouped_lines[force_declaration][tax] |= line
         return grouped_lines
 
     def get_declarations(self):
@@ -242,12 +247,13 @@ class AccountMove(models.Model):
         """Get residual amount for every `declarations`."""
         sign = 1 if self.move_type in ["out_invoice", "in_refund"] else -1
         dichiarazioni_amounts = {}
-        for tax_line in self.tax_line_ids:
-            amount = sign * tax_line.base
+        tax_lines = self.line_ids.filtered(lambda line: line.tax_line_id)
+        for tax_line in tax_lines:
+            amount = sign * tax_line.tax_base_amount
             for declaration in declarations:
                 if declaration.id not in dichiarazioni_amounts:
                     dichiarazioni_amounts[declaration.id] = declaration.available_amount
-                if tax_line.tax_id in declaration.taxes_ids:
+                if any(tax in declaration.taxes_ids for tax in tax_line.tax_ids):
                     dichiarazioni_amounts[declaration.id] -= amount
         return dichiarazioni_amounts
 

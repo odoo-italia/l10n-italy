@@ -27,13 +27,13 @@ class TestDichiarazioneIntento(TransactionCase):
             }
         )
 
-    def _create_invoice(self, partner, tax=False, date=False):
+    def _create_invoice(self, name, partner, tax=False, date=False):
         invoice_form = Form(
             self.env["account.move"].with_context(default_move_type="out_invoice")
         )
         invoice_form.partner_id = partner
         invoice_form.date = date if date else self.today_date
-        invoice_form.name = "Test Invoice for Dichiarazione"
+        invoice_form.name = "Test invoice " + name
         invoice_form.invoice_payment_term_id = self.env.ref(
             "account.account_payment_term_advance"
         )
@@ -171,21 +171,21 @@ class TestDichiarazioneIntento(TransactionCase):
         self.dichiarazione1 = self._create_dichiarazione(self.partner1, "out")
         self.dichiarazione2 = self._create_dichiarazione(self.partner2, "out")
         self.dichiarazione3 = self._create_dichiarazione(self.partner2, "out")
-        self.invoice1 = self._create_invoice(self.partner1)
-        self.invoice2 = self._create_invoice(self.partner1, tax=self.tax1)
-        self.invoice3 = self._create_invoice(self.partner1, tax=self.tax1)
+        self.invoice1 = self._create_invoice("1", self.partner1)
+        self.invoice2 = self._create_invoice("2", self.partner1, tax=self.tax1)
+        self.invoice3 = self._create_invoice("3", self.partner1, tax=self.tax1)
         self.invoice_without_valid_taxes = self._create_invoice(
-            self.partner1, tax=self.tax2
+            "no valid taxes", self.partner1, tax=self.tax2
         )
         future_date = datetime.today() + timedelta(days=10)
         future_date = future_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
         self.invoice_future = self._create_invoice(
-            self.partner1, date=future_date, tax=self.tax1
+            "future", self.partner1, date=future_date, tax=self.tax1
         )
         self.refund1 = self._create_refund(
             self.partner1, tax=self.tax1, invoice=self.invoice2
         )
-        self.invoice4 = self._create_invoice(self.partner3, tax=self.tax22)
+        self.invoice4 = self._create_invoice("4", self.partner3, tax=self.tax22)
         self.invoice4.fiscal_position_id = self.fiscal_position2.id
 
     def test_dichiarazione_data(self):
@@ -273,9 +273,7 @@ class TestDichiarazioneIntento(TransactionCase):
         refund_form.save()
 
         # Check that base amount has been updated
-        self.assertNotEqual(self.refund1.tax_line_ids[0].base, 1000)
-        self.refund1.tax_line_ids._compute_base_amount()
-        self.assertEqual(self.refund1.tax_line_ids[0].base, 1000)
+        self.assertEqual(self.refund1.amount_untaxed, 1000)
 
         # Refund goes over plafond: 100 + 1000 > 1000
         self.assertEqual(self.dichiarazione1.available_amount, 100)
