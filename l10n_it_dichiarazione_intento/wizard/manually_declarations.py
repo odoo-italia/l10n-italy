@@ -20,8 +20,8 @@ class SelectManuallyDeclarations(models.TransientModel):
         domain = [
             ("partner_id", "=", invoice.partner_id.commercial_partner_id.id),
             ("type", "=", type_short),
-            ("date_start", "<=", invoice.date),
-            ("date_end", ">=", invoice.date),
+            ("date_start", "<=", invoice.invoice_date),
+            ("date_end", ">=", invoice.invoice_date),
         ]
         return self.env["dichiarazione.intento"].search(domain)
 

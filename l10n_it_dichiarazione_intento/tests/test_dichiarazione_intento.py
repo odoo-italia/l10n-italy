@@ -32,7 +32,7 @@ class TestDichiarazioneIntento(TransactionCase):
             self.env["account.move"].with_context(default_move_type="out_invoice")
         )
         invoice_form.partner_id = partner
-        invoice_form.date = date if date else self.today_date
+        invoice_form.invoice_date = date if date else self.today_date
         invoice_form.name = "Test invoice " + name
         invoice_form.invoice_payment_term_id = self.env.ref(
             "account.account_payment_term_advance"

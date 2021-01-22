@@ -29,7 +29,7 @@
             >
                 <field
                     name="force_dichiarazione_intento_id"
-                    domain="[('partner_id', '=', parent.partner_id), ('state', '!=', 'close'), ('date_start', '&lt;=', parent.date), ('date_end', '&gt;=', parent.date)]"
+                    domain="[('partner_id', '=', parent.partner_id), ('state', '!=', 'close'), ('date_start', '&lt;=', parent.invoice_date), ('date_end', '&gt;=', parent.invoice_date)]"
                 />
             </xpath>
         </field>
@@ -43,7 +43,7 @@
             <field name="tax_ids" position="after">
                 <field
                     name="force_dichiarazione_intento_id"
-                    domain="[('partner_id', '=', parent.partner_id), ('state', '!=', 'close'), ('date_start', '&lt;=', parent.date), ('date_end', '&gt;=', parent.date)]"
+                    domain="[('partner_id', '=', parent.partner_id), ('state', '!=', 'close'), ('date_start', '&lt;=', parent.invoice_date), ('date_end', '&gt;=', parent.invoice_date)]"
                 />
             </field>
         </field>
