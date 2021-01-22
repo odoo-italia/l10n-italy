@@ -78,16 +78,6 @@ class TestDichiarazioneIntento(TransactionCase):
 
         super(TestDichiarazioneIntento, self).setUp()
         self.tax_model = self.env["account.tax"]
-        self.account = self.env["account.account"].search(
-            [
-                (
-                    "user_type_id",
-                    "=",
-                    self.env.ref("account.data_account_type_receivable").id,
-                )
-            ],
-            limit=1,
-        )
         self.a_sale = self.env["account.account"].search(
             [
                 (
