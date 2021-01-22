@@ -103,7 +103,7 @@ class AccountMove(models.Model):
             if not dichiarazioni:
                 continue
             # ----- Get only lines with taxes
-            lines = invoice.line_ids.filtered(lambda l: l.tax_ids)
+            lines = invoice.line_ids.filtered("tax_ids")
             if not lines:
                 continue
             # ----- Group lines for tax
@@ -247,7 +247,7 @@ class AccountMove(models.Model):
         """Get residual amount for every `declarations`."""
         sign = 1 if self.move_type in ["out_invoice", "in_refund"] else -1
         dichiarazioni_amounts = {}
-        tax_lines = self.line_ids.filtered(lambda line: line.tax_line_id)
+        tax_lines = self.line_ids.filtered("tax_ids")
         for tax_line in tax_lines:
             amount = sign * tax_line.tax_base_amount
             for declaration in declarations:
