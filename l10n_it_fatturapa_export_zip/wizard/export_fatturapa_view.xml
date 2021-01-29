@@ -16,23 +16,14 @@
     </field>
     </record>
 
-    <act_window
+    <record
+        id="action_fatturapa_out_export"
         name="Download ZIP e-invoice XML"
         res_model="wizard.fatturapa.export"
-        src_model="fatturapa.attachment.out"
+        binding_model="fatturapa.attachment.out"
         view_mode="form"
         target="new"
-        key2="client_action_multi"
-        id="action_fatturapa_out_export"
+        binding_views="list,form"
     />
 
-    <act_window
-        name="Download ZIP e-invoice XML"
-        res_model="wizard.fatturapa.export"
-        src_model="fatturapa.attachment.in"
-        view_mode="form"
-        target="new"
-        key2="client_action_multi"
-        id="action_fatturapa_in_export"
-    />
 </odoo>
