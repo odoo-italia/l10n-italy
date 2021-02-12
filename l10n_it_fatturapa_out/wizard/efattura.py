@@ -110,6 +110,11 @@ class EFatturaOut:
             if price_precision < 2:
                 price_precision = 2
 
+            # lo SdI non accetta quantità negative, quindi invertiamo price_unit
+            # e quantity (vd. format_quantity)
+            if line.quantity < 0:
+                res = -res
+
             # XXX arrotondamento?
             res = "{prezzo:.{precision}f}".format(prezzo=res, precision=price_precision)
             return res
@@ -122,6 +127,12 @@ class EFatturaOut:
                 uom_precision = 2
 
             quantity = line.quantity + 0
+
+            # lo SdI non accetta quantità negative, quindi invertiamo price_unit
+            # e quantity (vd. format_price)
+            if line.quantity < 0:
+                quantity = -quantity
+
             # XXX arrotondamento?
             res = ("{qta:.{precision}f}".format(qta=quantity, precision=uom_precision),)
             return res[0]
@@ -185,7 +196,7 @@ class EFatturaOut:
                     "EsigibilitaIVA": tax_line_id.payability,
                 }
                 if tax_line_id.law_reference:
-                    out_computed[aliquota]["RiferimentoNormativo"] = encode_for_export(
+                    out_computed[key]["RiferimentoNormativo"] = encode_for_export(
                         tax_line_id.law_reference, 100
                     )
             for line in record.invoice_line_ids:
@@ -213,8 +224,8 @@ class EFatturaOut:
                                 tax_id.law_reference, 100
                             )
                     else:
-                        out[aliquota]["ImponibileImporto"] += line.price_subtotal
-                        out[aliquota]["Imposta"] += 0.0
+                        out[key]["ImponibileImporto"] += line.price_subtotal
+                        out[key]["Imposta"] += 0.0
             out.update(out_computed)
             if there_is_a_note:
                 new_key = "22.00_False"
@@ -224,7 +235,7 @@ class EFatturaOut:
                         "ImponibileImporto": 0.00,
                         "Imposta": 0.00,
                     }
-            return out.values()
+            return list(out.values())
 
         def get_importo(line):
             str_number = str(line.discount)
@@ -232,6 +243,10 @@ class EFatturaOut:
             if number <= 2:
                 return False
             return line.price_unit * line.discount / 100
+
+        def get_default_note_tax(record):
+            all_taxes = get_all_taxes(record)
+            return all_taxes[0]["AliquotaIVA"] if all_taxes else "0.00"
 
         if self.partner_id.commercial_partner_id.is_pa:
             # check value code
@@ -272,9 +287,9 @@ class EFatturaOut:
             "in_eu": in_eu,
             "unidecode": unidecode,
             "wizard": self.wizard,
-            "price_subtotals": price_subtotals,
             "get_importo": get_importo,
             "get_all_taxes": get_all_taxes,
+            "get_default_note_tax": get_default_note_tax,
             # "base64": base64,
         }
         content = env.ref(

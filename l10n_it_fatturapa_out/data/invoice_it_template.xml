@@ -135,6 +135,10 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
         <template id="account_invoice_line_it_FatturaPA">
             <t t-set="tax_ids" t-value="line.tax_ids" />
             <t t-set="taxes" t-value="tax_ids.compute_all(line.price_unit)" />
+            <t
+                t-set="is_note"
+                t-value="line.display_type in ('line_section', 'line_note')"
+            />
             <DettaglioLinee>
                 <NumeroLinea t-esc="line_counter" />
                 <!--                <TipoCessionePrestazione t-esc=""/>-->
@@ -153,7 +157,8 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         t-if="line.name"
                         t-esc="encode_for_export(line.name, 1000)"
                     /><t t-if="not line.name" t-esc="'NO NAME'" /></Descrizione>
-                <Quantita t-esc="format_quantity(line)" />
+                <Quantita t-if="not is_note" t-esc="format_quantity(line)" />
+                <Quantita t-if="is_note">0.00</Quantita>
                 <UnitaMisura
                     t-if="line.product_uom_id.name"
                     t-esc="unidecode(line.product_uom_id.name)"
@@ -165,12 +170,11 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                     t-call="l10n_it_fatturapa_out.account_invoice_line_it_sconto_maggiorazione"
                 />
                 <PrezzoTotale t-esc="format_monetary(line.price_subtotal, currency)" />
-                <!-- without tax, must include any discounts and any extra charge-->
+                <AliquotaIVA t-if="is_note" t-esc="get_default_note_tax(record)" />
                 <AliquotaIVA
-                    t-if="tax_ids.amount_type == 'percent'"
+                    t-if="not is_note"
                     t-esc="format_numbers(tax_ids.amount)"
                 />
-                <AliquotaIVA t-if="tax_ids.amount_type != 'percent'" t-esc="'0.00'" />
                 <t t-call="l10n_it_fatturapa_out.account_invoice_line_ritenuta" />
                 <Natura t-if="tax_ids.kind_id.code" t-esc="tax_ids.kind_id.code" />
                 <RiferimentoAmministrazione
