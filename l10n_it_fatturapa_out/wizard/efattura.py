@@ -167,6 +167,13 @@ class EFatturaOut:
                 return True
             return False
 
+        def get_importo(line):
+            str_number = str(line.discount)
+            number = str_number[::-1].find(".")
+            if number <= 2:
+                return False
+            return line.price_unit * line.discount / 100
+
         if self.partner_id.commercial_partner_id.is_pa:
             # check value code
             code = self.partner_id.ipa_code
@@ -207,6 +214,7 @@ class EFatturaOut:
             "unidecode": unidecode,
             "wizard": self.wizard,
             "price_subtotals": price_subtotals,
+            "get_importo": get_importo,
             # "base64": base64,
         }
         content = env.ref(

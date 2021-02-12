@@ -116,12 +116,19 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
         </template>
 
         <template id="account_invoice_line_it_sconto_maggiorazione">
-            <ScontoMaggiorazione t-if="line.discount != 0">
+            <t t-set="importo" t-value="get_importo(line)" />
+            <ScontoMaggiorazione t-if="line.discount != 0 or importo != 0">
                 <!-- [2.2.1.10] -->
-                <Tipo t-if="line.discount > 0" t-esc="'SC'" />
-                <Tipo t-if="not line.discount > 0" t-esc="'MG'" />
-                <Percentuale t-esc="format_numbers(abs(line.discount))" />
-                <!-- XXX                   <Importo t-esc=""/>-->
+                <t t-if="importo">
+                    <Tipo t-if="importo &gt; 0">SC</Tipo>
+                    <Tipo t-if="importo &lt;= 0">MG</Tipo>
+                    <Importo t-esc="format_numbers(abs(importo))" />
+                </t>
+                <t t-else="">
+                    <Tipo t-if="line.discount &gt; 0">SC</Tipo>
+                    <Tipo t-if="line.discount &lt;= 0">MG</Tipo>
+                    <Percentuale t-esc="format_numbers_two(abs(line.discount))" />
+                </t>
             </ScontoMaggiorazione>
         </template>
 
