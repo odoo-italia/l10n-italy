@@ -573,36 +573,31 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         t-set="tax_line_ids"
                         t-value="record.line_ids.filtered(lambda line: line.tax_line_id)"
                     />
-                    <!-- costruisci le righe mancanti nel riepilogo, quelle con imposta a zero -->
-                    <t
-                        t-set="zero_tax_ids"
-                        t-value="record.line_ids.tax_ids - tax_line_ids.tax_line_id"
-                    />
-                    <t t-foreach="zero_tax_ids" t-as="tax">
-                        <DatiRiepilogo>
-                            <!--2.2.2-->
-                            <AliquotaIVA t-esc="format_numbers(tax.amount)" />
-                            <Natura t-if="tax.kind_id.code" t-esc="tax.kind_id.code" />
-                            <!--                <SpeseAccessorie t-esc=""/>-->
-                            <!--                <Arrotondamento t-esc=""/>-->
-                            <ImponibileImporto
-                                t-esc="format_monetary(price_subtotals[record.id][tax.id], currency)"
+                    <t t-foreach="get_all_taxes(record)" t-as="tax_data">
+                       <DatiRiepilogo>
+                              <!--2.2.2-->
+                              <AliquotaIVA t-esc="tax_data['AliquotaIVA']" />
+                              <Natura
+                                t-if="tax_data.get('Natura', False)"
+                                t-esc="tax_data['Natura']"
                             />
-                            <Imposta t-esc="format_monetary(0.0, currency)" />
-                            <EsigibilitaIVA
-                                t-if="tax.payability"
-                                t-esc="tax.payability"
+                              <!--                <SpeseAccessorie t-esc=""/>-->
+                              <!--                <Arrotondamento t-esc=""/>-->
+                              <ImponibileImporto
+                                t-esc="format_monetary(tax_data['ImponibileImporto'], currency)"
                             />
-                            <RiferimentoNormativo
-                                t-if="tax.law_reference"
-                                t-esc="encode_for_export(tax.law_reference, 100)"
+                              <Imposta
+                                t-esc="format_monetary(tax_data['Imposta'], currency)"
                             />
-                        </DatiRiepilogo>
-                    </t>
-                    <t t-foreach="tax_line_ids" t-as="tax_line">
-                        <t
-                            t-call="l10n_it_fatturapa_out.account_invoice_line_it_dati_riepilogo"
-                        />
+                                <EsigibilitaIVA
+                                t-if="tax_data.get('EsigibilitaIVA', False)"
+                                t-esc="tax_data['EsigibilitaIVA']"
+                            />
+                                <RiferimentoNormativo
+                                t-if="tax_data.get('RiferimentoNormativo', False)"
+                                t-esc="encode_for_export(tax_data['RiferimentoNormativo'], 100)"
+                            />
+                       </DatiRiepilogo>
                     </t>
                 </DatiBeniServizi>
                 <!--                <DatiVeicoli>-->
