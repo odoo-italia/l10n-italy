@@ -12,22 +12,25 @@
             parent="account.menu_finance_payables"
         />
 
-        <record id="view_invoice_line_form_fatturapa" model="ir.ui.view">
-            <field name="name">account.invoice.line.fatturapa</field>
-            <field name="model">account.move.line</field>
-            <field name="inherit_id" ref="account.view_move_line_form" />
+        <record id="view_invoice_form_fatturapa" model="ir.ui.view">
+            <field name="name">account.invoice.fatturapa</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form" />
             <field name="arch" type="xml">
-                <field name="name" position="after">
+                <xpath
+                    expr="//field[@name='invoice_line_ids']/form/sheet/field[@name='name']"
+                    position="after"
+                >
                     <separator string="Electronic Invoice" />
                     <div id="admin_ref">
                         <group>
                             <field name="admin_ref" />
                         </group>
-                   </div>
+                    </div>
                     <group string="Related Documents">
                         <field name="related_documents" nolabel="1" />
                     </group>
-                </field>
+                </xpath>
             </field>
         </record>
 
