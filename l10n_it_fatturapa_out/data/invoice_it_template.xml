@@ -566,11 +566,30 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         t-set="tax_line_ids"
                         t-value="record.line_ids.filtered(lambda line: line.tax_line_id)"
                     />
-                    <t t-if="not tax_line_ids">
+                    <!-- costruisci le righe mancanti nel riepilogo, quelle con imposta a zero -->
+                    <t
+                        t-set="zero_tax_ids"
+                        t-value="record.line_ids.tax_ids - tax_line_ids.tax_line_id"
+                    />
+                    <t t-foreach="zero_tax_ids" t-as="tax">
                         <DatiRiepilogo>
-                            <AliquotaIVA>0.00</AliquotaIVA>
-                            <ImponibileImporto>0.00</ImponibileImporto>
-                            <Imposta>0.00</Imposta>
+                            <!--2.2.2-->
+                            <AliquotaIVA t-esc="format_numbers(tax.amount)" />
+                            <Natura t-if="tax.kind_id.code" t-esc="tax.kind_id.code" />
+                            <!--                <SpeseAccessorie t-esc=""/>-->
+                            <!--                <Arrotondamento t-esc=""/>-->
+                            <ImponibileImporto
+                                t-esc="format_monetary(price_subtotals[record.id][tax.id], currency)"
+                            />
+                            <Imposta t-esc="format_monetary(0.0, currency)" />
+                            <EsigibilitaIVA
+                                t-if="tax.payability"
+                                t-esc="tax.payability"
+                            />
+                            <RiferimentoNormativo
+                                t-if="tax.law_reference"
+                                t-esc="encode_for_export(tax.law_reference, 100)"
+                            />
                         </DatiRiepilogo>
                     </t>
                     <t t-foreach="tax_line_ids" t-as="tax_line">
