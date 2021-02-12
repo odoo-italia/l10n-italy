@@ -167,6 +167,65 @@ class EFatturaOut:
                 return True
             return False
 
+        def get_all_taxes(record):
+            out = {}
+            out_computed = {}
+            there_is_a_note = False
+            tax_ids = record.line_ids.filtered(lambda line: line.tax_line_id)
+            for tax_id in tax_ids:
+                tax_line_id = tax_id.tax_line_id
+                aliquota = format_numbers(tax_line_id.amount)
+                key = "{}_{}".format(aliquota, tax_line_id.kind_id.code)
+                out_computed[key] = {
+                    "AliquotaIVA": aliquota,
+                    "Natura": tax_line_id.kind_id.code,
+                    # 'Arrotondamento':'',
+                    "ImponibileImporto": tax_id.tax_base_amount,
+                    "Imposta": tax_id.price_total,
+                    "EsigibilitaIVA": tax_line_id.payability,
+                }
+                if tax_line_id.law_reference:
+                    out_computed[aliquota]["RiferimentoNormativo"] = encode_for_export(
+                        tax_line_id.law_reference, 100
+                    )
+            for line in record.invoice_line_ids:
+                if (
+                    line.display_type in ("line_section", "line_note")
+                    and not there_is_a_note
+                ):
+                    there_is_a_note = True
+                for tax_id in line.tax_ids:
+                    aliquota = format_numbers(tax_id.amount)
+                    key = "{}_{}".format(aliquota, tax_id.kind_id.code)
+                    if key in out_computed:
+                        continue
+                    if key not in out:
+                        out[key] = {
+                            "AliquotaIVA": aliquota,
+                            "Natura": tax_id.kind_id.code,
+                            # 'Arrotondamento':'',
+                            "ImponibileImporto": line.price_subtotal,
+                            "Imposta": 0.0,
+                            "EsigibilitaIVA": tax_id.payability,
+                        }
+                        if tax_id.law_reference:
+                            out[key]["RiferimentoNormativo"] = encode_for_export(
+                                tax_id.law_reference, 100
+                            )
+                    else:
+                        out[aliquota]["ImponibileImporto"] += line.price_subtotal
+                        out[aliquota]["Imposta"] += 0.0
+            out.update(out_computed)
+            if there_is_a_note:
+                new_key = "22.00_False"
+                if new_key not in out:
+                    out[new_key] = {
+                        "AliquotaIVA": "22.00",
+                        "ImponibileImporto": 0.00,
+                        "Imposta": 0.00,
+                    }
+            return out.values()
+
         def get_importo(line):
             str_number = str(line.discount)
             number = str_number[::-1].find(".")
@@ -215,6 +274,7 @@ class EFatturaOut:
             "wizard": self.wizard,
             "price_subtotals": price_subtotals,
             "get_importo": get_importo,
+            "get_all_taxes": get_all_taxes,
             # "base64": base64,
         }
         content = env.ref(
