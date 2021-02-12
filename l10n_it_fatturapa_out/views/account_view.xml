@@ -18,9 +18,6 @@
             <field name="partner_id" position="after">
                 <field name="electronic_invoice_subjected" invisible="1" />
             </field>
-            <field name="analytic_tag_ids" position="after">
-                <field name="admin_ref" />
-            </field>
             <xpath expr="//notebook" position="inside">
                 <page
                     string="Related Documents"
