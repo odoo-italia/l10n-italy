@@ -12,7 +12,6 @@ class IrMailServer(models.Model):
     email_from_for_fatturaPA = fields.Char(
         "Sender Email Address")
 
-    @api.multi
     def test_smtp_connection(self):
         self.ensure_one()
         if self.is_fatturapa_pec:
