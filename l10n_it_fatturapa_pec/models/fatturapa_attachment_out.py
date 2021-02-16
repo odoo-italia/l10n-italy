@@ -39,7 +39,7 @@ class FatturaPAAttachmentOut(models.Model):
     delivered_date = fields.Datetime("Delivered Date", readonly=True)
     sending_user = fields.Many2one("res.users", "Sending User", readonly=True)
 
-    ti
+
     def reset_to_ready(self):
         for att in self:
             if att.state != 'sender_error':
@@ -58,7 +58,7 @@ class FatturaPAAttachmentOut(models.Model):
             raise UserError(_(
                 "No incoming PEC server found. Please configure it."))
 
-    ti
+
     def send_via_pec(self):
         self._check_fetchmail()
         self.env.user.company_id.sdi_channel_id.check_first_pec_sending()
@@ -110,7 +110,7 @@ class FatturaPAAttachmentOut(models.Model):
                     att.state = 'sender_error'
                     mail.body = str(e)
 
-    ti
+
     def parse_pec_response(self, message_dict):
         message_dict['model'] = self._name
         message_dict['res_id'] = 0
@@ -241,7 +241,7 @@ class FatturaPAAttachmentOut(models.Model):
                 message_dict['res_id'] = fatturapa_attachment_out.id
         return message_dict
 
-    ti
+
     def unlink(self):
         for att in self:
             if att.state != 'ready':

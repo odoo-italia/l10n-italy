@@ -24,7 +24,7 @@ class Fetchmail(models.Model):
         default=_default_e_inv_notify_partner_ids
     )
 
-    ti
+
     def fetch_mail(self):
         for server in self:
             if not server.is_fatturapa_pec:
@@ -134,7 +134,7 @@ class Fetchmail(models.Model):
             server.write({'date': fields.Datetime.now()})
         return True
 
-    ti
+
     def manage_pec_failure(self, exception, error_messages):
         self.ensure_one()
         _logger.info(
@@ -162,7 +162,7 @@ class Fetchmail(models.Model):
               "Last error message is '%s'")
             % (self.name, self.last_pec_error_message))
 
-    ti
+
     def notify_or_log(self, message):
         """
         Send an email to partners in

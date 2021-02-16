@@ -30,14 +30,14 @@ class AccountInvoice(models.Model):
         store='true',
     )
 
-    ti
+
     @api.depends('fatturapa_attachment_out_id.state')
     def _compute_fatturapa_state(self):
         for record in self:
             record.fatturapa_state = fatturapa_attachment_state_mapping.get(
                 record.fatturapa_attachment_out_id.state)
 
-    ti
+
     def action_invoice_cancel(self):
         for invoice in self:
             if invoice.fatturapa_state == "error":

@@ -6,7 +6,7 @@ class SendPEC(models.TransientModel):
     _name = 'wizard.fatturapa.send.pec'
     _description = "Wizard to send multiple e-invoice PEC"
 
-    ti
+
     def send_pec(self):
         if self.env.context.get('active_ids'):
             attachments = self.env['fatturapa.attachment.out'].browse(
