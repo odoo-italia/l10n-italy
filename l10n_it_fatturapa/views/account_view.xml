@@ -17,10 +17,7 @@
             <field name="model">account.move.line</field>
             <field name="inherit_id" ref="account.view_move_line_form" />
             <field name="arch" type="xml">
-                <xpath
-                    expr="//field[@name='invoice_line_ids']/form/sheet/field[@name='name']"
-                    position="after"
-                >
+              <field name="name" position="after">
                     <separator string="Electronic Invoice" />
                     <div id="admin_ref">
                         <group>
@@ -30,7 +27,7 @@
                     <group string="Related Documents">
                         <field name="related_documents" nolabel="1" />
                     </group>
-                </xpath>
+              </field>
             </field>
         </record>
 
