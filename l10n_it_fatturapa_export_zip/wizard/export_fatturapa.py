@@ -26,7 +26,7 @@ class WizardAccountInvoiceExport(models.TransientModel):
                 raise UserError(_(
                     "Attachment %s already exported. Remove ZIP file first"
                 ) % att.display_name)
-            #if not att.datas or not att.datas_fname:
+            #if not att.datas or not att.store_fname:
             if not att.datas or not att.name:
                 raise UserError(
                     _("Attachment %s does not have XML file")
@@ -35,13 +35,13 @@ class WizardAccountInvoiceExport(models.TransientModel):
         fp = io.BytesIO()
         with zipfile.ZipFile(fp, mode="w") as zf:
             for att in attachments:
-                # zf.writestr(att.datas_fname, base64.b64decode(att.datas))
+                # zf.writestr(att.store_fname, base64.b64decode(att.datas))
                 zf.writestr(att.name, base64.b64decode(att.datas))
         fp.seek(0)
         data = fp.read()
         attach_vals = {
             'name': self.name + '.zip',
-            # 'datas_fname': self.name + '.zip',
+            # 'store_fname': self.name + '.zip',
             'datas': base64.encodestring(data),
         }
         zip_att = self.env['ir.attachment'].create(attach_vals)

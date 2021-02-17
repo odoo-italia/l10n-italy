@@ -143,7 +143,7 @@ class MailThread(models.AbstractModel):
             att_name = subject.replace('CONSEGNA: ', '')
             fatturapa_attachment_out = attachment_out_model \
                 .search([
-                    ('datas_fname', '=', att_name)
+                    ('store_fname', '=', att_name)
                 ])
             if not fatturapa_attachment_out:
                 fatturapa_attachment_out = attachment_out_model \
@@ -156,7 +156,7 @@ class MailThread(models.AbstractModel):
             att_name = subject.replace('ACCETTAZIONE: ', '')
             fatturapa_attachment_out = attachment_out_model \
                 .search([
-                    ('datas_fname', '=', att_name)
+                    ('store_fname', '=', att_name)
                 ])
             if not fatturapa_attachment_out:
                 fatturapa_attachment_out = attachment_out_model \
@@ -207,7 +207,7 @@ class MailThread(models.AbstractModel):
                         else:
                             fatturapa_attachment_in.create({
                                 'name': file_name,
-                                'datas_fname': file_name,
+                                'store_fname': file_name,
                                 'datas': base64.encodestring(inv_file.read()),
                                 'company_id': company_id,
                                 'e_invoice_received_date': received_date,

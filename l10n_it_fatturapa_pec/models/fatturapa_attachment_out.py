@@ -68,7 +68,7 @@ class FatturaPAAttachmentOut(models.Model):
                 _("You can only send files in 'Ready to Send' state.")
             )
         for att in self:
-            if not att.datas or not att.datas_fname:
+            if not att.datas or not att.store_fname:
                 raise UserError(_("File content and file name are mandatory"))
             mail_message = self.env['mail.message'].create({
                 'model': self._name,
@@ -133,8 +133,8 @@ class FatturaPAAttachmentOut(models.Model):
                 file_name = file_name.text
                 fatturapa_attachment_out = self.search(
                     ['|',
-                     ('datas_fname', '=', file_name),
-                     ('datas_fname', '=', file_name.replace('.p7m', ''))])
+                     ('store_fname', '=', file_name),
+                     ('store_fname', '=', file_name.replace('.p7m', ''))])
                 if len(fatturapa_attachment_out) > 1:
                     _logger.info('More than 1 out invoice found for incoming'
                                  'message')
