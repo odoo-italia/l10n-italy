@@ -43,11 +43,11 @@ class Fetchmail(models.Model):
                     'start checking for new e-invoices on %s server %s',
                     server.server_type, server.name)
                 additional_context['fetchmail_server_id'] = server.id
-                additional_context['server_type'] = server.type
+                additional_context['server_type'] = server.server_type
                 imap_server = None
                 pop_server = None
                 error_messages = list()
-                if server.type == 'imap':
+                if server.server_type == 'imap':
                     try:
                         imap_server = server.connect()
                         imap_server.select()
@@ -79,7 +79,7 @@ class Fetchmail(models.Model):
                         if imap_server:
                             imap_server.close()
                             imap_server.logout()
-                elif server.type == 'pop':
+                elif server.server_type == 'pop':
                     try:
                         while True:
                             pop_server = server.connect()
