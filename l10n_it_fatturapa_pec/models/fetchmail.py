@@ -140,7 +140,7 @@ class Fetchmail(models.Model):
         _logger.info(
             "Failure when fetching emails "
             "using {serv_type} server {serv_name}.".format(
-                serv_type=self.type,
+                serv_type=self.server_type,
                 serv_name=self.name),
             exc_info=True)
 
