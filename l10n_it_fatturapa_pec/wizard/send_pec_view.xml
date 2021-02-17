@@ -19,12 +19,12 @@
         </field>
     </record>
 
-    <act_window id="action_wizard_fatturapa_send_pec"
-                key2="client_action_multi"
-                name="Send Electronic Invoice"
-                res_model="wizard.fatturapa.send.pec"
-                src_model="fatturapa.attachment.out"
-                target="new"
-                view_id="wizard_fatturapa_send_pec_view"
-                view_mode="form"/>
+<!--    <act_window id="action_wizard_fatturapa_send_pec"-->
+<!--                key2="client_action_multi"-->
+<!--                name="Send Electronic Invoice"-->
+<!--                res_model="wizard.fatturapa.send.pec"-->
+<!--                src_model="fatturapa.attachment.out"-->
+<!--                target="new"-->
+<!--                view_id="wizard_fatturapa_send_pec_view"-->
+<!--                view_mode="form"/>-->
 </odoo>

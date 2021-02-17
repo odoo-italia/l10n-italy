@@ -18,6 +18,33 @@ from .efattura import EFatturaOut
 
 _logger = logging.getLogger(__name__)
 
+try:
+    from pyxb.utils import domutils
+    from pyxb.binding.datatypes import decimal as pyxb_decimal
+    from unidecode import unidecode
+    from pyxb.exceptions_ import SimpleFacetValueError, SimpleTypeValueError
+except ImportError as err:
+    _logger.debug(err)
+
+
+
+class FatturapaBDS(domutils.BindingDOMSupport):
+
+    def valueAsText(self, value, enable_default_namespace=True):
+        if isinstance(value, pyxb_decimal) and hasattr(value, '_CF_pattern'):
+            # PyXB changes the text representation of decimals
+            # so that it breaks pattern matching.
+            # We have to use directly the string value
+            # instead of letting PyXB edit it
+            return str(value)
+        return super(FatturapaBDS, self) \
+            .valueAsText(value, enable_default_namespace)
+
+
+fatturapaBDS = FatturapaBDS()
+
+
+
 
 def id_generator(
     size=5, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase

@@ -17,7 +17,7 @@ fatturapa_attachment_state_mapping = {
 
 
 class AccountInvoice(models.Model):
-    _inherit = 'account.invoice'
+    _inherit = 'account.move'
 
     fatturapa_state = fields.Selection(
         [('ready', 'Ready to Send'),
