@@ -41,7 +41,7 @@ class Fetchmail(models.Model):
                 MailThread = self.env['mail.thread']
                 _logger.info(
                     'start checking for new e-invoices on %s server %s',
-                    server.type, server.name)
+                    server.server_type, server.name)
                 additional_context['fetchmail_server_id'] = server.id
                 additional_context['server_type'] = server.type
                 imap_server = None
