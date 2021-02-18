@@ -131,10 +131,20 @@ class FatturaPAAttachmentOut(models.Model):
 
             if file_name is not None:
                 file_name = file_name.text
+
                 fatturapa_attachment_out = self.search(
                     ['|',
-                     ('store_fname', '=', file_name),
-                     ('store_fname', '=', file_name.replace('.p7m', ''))])
+                     ('name', '=', file_name),
+                     ('name', '=', file_name.replace('.p7m', ''),
+                      )])
+
+                if not fatturapa_attachment_out:
+                    fatturapa_attachment_out = self.search(
+                        ['|',
+                         ('store_fname', '=', file_name),
+                         ('store_fname', '=', file_name.replace('.p7m', ''),
+                          )])
+
                 if len(fatturapa_attachment_out) > 1:
                     _logger.info('More than 1 out invoice found for incoming'
                                  'message')
