@@ -171,6 +171,14 @@ class EFatturaOut:
             )
             return encode_for_export(attachment_name, 60)
 
+        def get_type_attachment(doc_id):
+            mini_map = {
+                "application/pdf": "PDF",
+                "image/png": "PNG",
+            }
+            attachment_type = mini_map.get(doc_id.mimetype, False)
+            return encode_for_export(attachment_type, 10) if attachment_type else False
+
         def in_eu(partner):
             europe = env.ref("base.europe", raise_if_not_found=False)
             country = partner.country_id
@@ -254,16 +262,6 @@ class EFatturaOut:
         else:
             code = self.partner_id.codice_destinatario
 
-        price_subtotals = {}
-        for invoice in self.invoices:
-            inv_subtotals = {}
-            for line in invoice.invoice_line_ids:
-                for tax_id in line.tax_ids:
-                    inv_subtotals[tax_id.id] = (
-                        inv_subtotals.get(tax_id.id, 0.0) + line.price_subtotal
-                    )
-            price_subtotals[invoice.id] = inv_subtotals
-
         # Create file content.
         template_values = {
             "formato_trasmissione": "FPA12" if self.partner_id.is_pa else "FPR12",
@@ -283,6 +281,7 @@ class EFatturaOut:
             "get_vat_country": get_vat_country,
             "get_causale": get_causale,
             "get_nome_attachment": get_nome_attachment,
+            "get_type_attachment": get_type_attachment,
             "codice_destinatario": code.upper(),
             "in_eu": in_eu,
             "unidecode": unidecode,
