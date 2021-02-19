@@ -29,7 +29,6 @@
                     <button
                         name="action_confirm"
                         type="object"
-                        states="draft"
                         class="oe_highlight"
                         string="Validate"
                     />
