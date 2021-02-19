@@ -8,7 +8,7 @@
 
 from odoo import _, fields, models
 
-from .stock_delivery_note import DATE_FORMAT
+from .stock_delivery_note import DATE_FORMAT, DOMAIN_INVOICE_STATUSES
 
 
 class AccountInvoice(models.Model):
@@ -32,7 +32,7 @@ class AccountInvoice(models.Model):
     def goto_delivery_notes(self, **kwargs):
         delivery_notes = self.mapped("delivery_note_ids")
         action = self.env.ref(
-            "l10n_it_delivery_note." "stock_delivery_note_action"
+            "l10n_it_delivery_note.stock_delivery_note_action"
         ).read()[0]
         action.update(kwargs)
 
@@ -43,7 +43,7 @@ class AccountInvoice(models.Model):
             action["views"] = [
                 (
                     self.env.ref(
-                        "l10n_it_delivery_note." "stock_delivery_note_form_view"
+                        "l10n_it_delivery_note.stock_delivery_note_form_view"
                     ).id,
                     "form",
                 )
@@ -69,7 +69,6 @@ class AccountInvoice(models.Model):
             "res_model": "account.move",
             "res_id": self.id,
             "views": [(view_id, "form")],
-            "view_type": "form",
             "view_mode": "form",
             "target": "current",
             **kwargs,
@@ -99,24 +98,49 @@ class AccountInvoice(models.Model):
             #
             context["lang"] = invoice.partner_id.lang
 
-            for note in invoice.delivery_note_ids:
-                new_lines.append(
-                    (
-                        0,
-                        False,
-                        {
-                            "sequence": 99,
-                            "display_type": "line_note",
-                            "name": _("""Delivery Note "{}" of {}""").format(
-                                note.name, note.date.strftime(DATE_FORMAT)
-                            ),
-                            "delivery_note_id": note.id,
-                            "quantity": 0,
-                        },
+            for line in invoice.invoice_line_ids:
+                for sale in line.sale_line_ids:
+                    delivery_note_line = (
+                        invoice.delivery_note_ids.mapped("line_ids")
+                        & sale.delivery_note_line_ids
                     )
-                )
+                    for note_line in delivery_note_line.filtered(
+                        lambda l: l.invoice_status == DOMAIN_INVOICE_STATUSES[2]
+                    ):
+                        new_lines.append(
+                            (
+                                0,
+                                False,
+                                {
+                                    "sequence": line.sequence - 1,
+                                    "display_type": "line_note",
+                                    "name": _("""Delivery Note "{}" of {}""").format(
+                                        note_line.delivery_note_id.name,
+                                        note_line.delivery_note_id.date.strftime(
+                                            DATE_FORMAT
+                                        ),
+                                    ),
+                                    "delivery_note_id": note_line.delivery_note_id.id,
+                                    "quantity": 0,
+                                },
+                            )
+                        )
 
             invoice.write({"invoice_line_ids": new_lines})
+
+    def unlink(self):
+        # Ripristino il valore delle delivery note
+        # per poterle rifatturare
+        inv_lines = self.mapped("invoice_line_ids")
+        all_dnls = inv_lines.mapped("sale_line_ids").mapped("delivery_note_line_ids")
+        inv_dnls = self.mapped("delivery_note_ids").mapped("line_ids")
+        dnls_to_unlink = all_dnls & inv_dnls
+        res = super().unlink()
+        dnls_to_unlink.sync_invoice_status()
+        dnls_to_unlink.mapped("delivery_note_id")._compute_invoice_status()
+        for dn in dnls_to_unlink.mapped("delivery_note_id"):
+            dn.state = "confirm"
+        return res
 
 
 class AccountInvoiceLine(models.Model):

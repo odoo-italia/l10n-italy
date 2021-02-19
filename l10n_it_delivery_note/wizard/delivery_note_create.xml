@@ -10,6 +10,7 @@
         <field name="model">stock.delivery.note.create.wizard</field>
         <field name="arch" type="xml">
             <form>
+                <field name="picking_type" invisible="True" />
                 <div attrs="{'invisible': [('error_message', '=', False)]}">
                     <field name="error_message" />
                 </div>
@@ -72,19 +73,6 @@
             </form>
         </field>
     </record>
-
-    <!--    <record-->
-    <!--        id="stock_delivery_note_create_action"-->
-    <!--        groups="l10n_it_delivery_note.use_advanced_delivery_notes"-->
-    <!--        key2="client_action_multi"-->
-    <!--        name="Create a new delivery note"-->
-    <!--        res_model="stock.delivery.note.create.wizard"-->
-    <!--        src_model="stock.picking"-->
-    <!--        view_mode="form"-->
-    <!--        view_type="form"-->
-    <!--        target="new"-->
-    <!--        multi="True"-->
-    <!--    />-->
 
     <record id="stock_delivery_note_create_action" model="ir.actions.act_window">
         <field name="name">Create a new delivery note</field>

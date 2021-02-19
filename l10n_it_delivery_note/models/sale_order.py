@@ -60,7 +60,7 @@ class SaleOrder(models.Model):
     def _compute_delivery_notes(self):
         for order in self:
             delivery_notes = order.order_line.mapped(
-                "delivery_note_line_ids." "delivery_note_id"
+                "delivery_note_line_ids.delivery_note_id"
             )
 
             order.delivery_note_ids = delivery_notes
@@ -102,29 +102,28 @@ class SaleOrder(models.Model):
         )
 
         ready_delivery_note_lines.write({"invoice_status": DOMAIN_INVOICE_STATUSES[2]})
-        ids = list(
-            dict.fromkeys(ready_delivery_notes.invoice_ids.ids + invoice_ids.ids)
+        ready_delivery_notes.write(
+            {"invoice_ids": [(4, invoice_id) for invoice_id in invoice_ids]}
         )
-        ready_delivery_notes.write({"invoice_ids": [(6, 0, ids)]})
 
         ready_delivery_notes._compute_invoice_status()
 
     def _generate_delivery_note_lines(self, invoice_ids):
-        invoices = self.env["account.move"].browse(invoice_ids.ids)
+        invoices = self.env["account.move"].browse(invoice_ids)
         invoices.update_delivery_note_lines()
 
     def _create_invoices(self, grouped=False, final=False):
         invoice_ids = super()._create_invoices(grouped=grouped, final=final)
 
-        self._assign_delivery_notes_invoices(invoice_ids)
-        self._generate_delivery_note_lines(invoice_ids)
+        self._assign_delivery_notes_invoices(invoice_ids.ids)
+        self._generate_delivery_note_lines(invoice_ids.ids)
 
         return invoice_ids
 
     def goto_delivery_notes(self, **kwargs):
         delivery_notes = self.mapped("delivery_note_ids")
         action = self.env.ref(
-            "l10n_it_delivery_note." "stock_delivery_note_action"
+            "l10n_it_delivery_note.stock_delivery_note_action"
         ).read()[0]
         action.update(kwargs)
 
@@ -135,7 +134,7 @@ class SaleOrder(models.Model):
             action["views"] = [
                 (
                     self.env.ref(
-                        "l10n_it_delivery_note." "stock_delivery_note_form_view"
+                        "l10n_it_delivery_note.stock_delivery_note_form_view"
                     ).id,
                     "form",
                 )
