@@ -663,10 +663,16 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         </DettaglioPagamento>
                     </t>
                 </DatiPagamento>
-                <Allegati t-foreach="record.fatturapa_doc_attachments" t-as="doc_id">
+                <Allegati
+                    t-foreach="record.fatturapa_doc_attachments.ir_attachment_id"
+                    t-as="doc_id"
+                >
                     <NomeAttachment t-esc="get_nome_attachment(doc_id)" />
                     <!--                    <AlgoritmoCompressione t-esc=""/>-->
-                    <!--                    <FormatoAttachment>PDF</FormatoAttachment>-->
+                    <FormatoAttachment
+                        t-if="get_type_attachment(doc_id)"
+                        t-esc="get_type_attachment(doc_id)"
+                    />
                     <!--                    <DescrizioneAttachment  t-esc=""/>-->
                     <Attachment t-esc="doc_id.datas" />
                 </Allegati>
