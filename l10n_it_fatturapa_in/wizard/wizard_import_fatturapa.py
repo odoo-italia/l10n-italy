@@ -90,7 +90,7 @@ class WizardImportFatturapa(models.TransientModel):
     def check_partner_base_data(self, partner_id, DatiAnagrafici):
         partner = self.env["res.partner"].browse(partner_id)
         if (
-            DatiAnagrafici.Anagrafica.Denominazione
+            'Denominazione' in DatiAnagrafici.Anagrafica and DatiAnagrafici.Anagrafica.Denominazione
             and partner.name != DatiAnagrafici.Anagrafica.Denominazione
         ):
             self.log_inconsistency(
@@ -98,7 +98,7 @@ class WizardImportFatturapa(models.TransientModel):
                 % (DatiAnagrafici.Anagrafica.Denominazione, partner.name)
             )
         if (
-            DatiAnagrafici.Anagrafica.Nome
+            'Nome' in DatiAnagrafici.Anagrafica and DatiAnagrafici.Anagrafica.Nome
             and partner.firstname != DatiAnagrafici.Anagrafica.Nome
         ):
             self.log_inconsistency(
@@ -106,7 +106,7 @@ class WizardImportFatturapa(models.TransientModel):
                 % (DatiAnagrafici.Anagrafica.Nome, partner.firstname)
             )
         if (
-            DatiAnagrafici.Anagrafica.Cognome
+            'Cognome' in DatiAnagrafici.Anagrafica and DatiAnagrafici.Anagrafica.Cognome
             and partner.lastname != DatiAnagrafici.Anagrafica.Cognome
         ):
             self.log_inconsistency(
@@ -219,13 +219,17 @@ class WizardImportFatturapa(models.TransientModel):
         fiscalPosModel = self.env["fatturapa.fiscal_position"]
         if partner_id and not no_contact_update:
             partner_company_id = partner_model.browse(partner_id).company_id.id
+            register = ""
+            if 'AlboProfessionale' in cedPrest.DatiAnagrafici:
+                register = cedPrest.DatiAnagrafici.AlboProfessionale or ""
+
             vals = {
                 "street": cedPrest.Sede.Indirizzo,
                 "zip": cedPrest.Sede.CAP,
                 "city": cedPrest.Sede.Comune,
-                "register": cedPrest.DatiAnagrafici.AlboProfessionale or "",
+                "register": register,
             }
-            if cedPrest.DatiAnagrafici.ProvinciaAlbo:
+            if 'ProvinciaAlbo' in cedPrest.DatiAnagrafici and cedPrest.DatiAnagrafici.ProvinciaAlbo:
                 ProvinciaAlbo = cedPrest.DatiAnagrafici.ProvinciaAlbo
                 prov = self.ProvinceByCode(ProvinciaAlbo)
                 if not prov:
@@ -235,7 +239,7 @@ class WizardImportFatturapa(models.TransientModel):
                     )
                 else:
                     vals["register_province"] = prov[0].id
-            if cedPrest.Sede.Provincia:
+            if 'Provincia' in cedPrest.Sede and cedPrest.Sede.Provincia:
                 Provincia = cedPrest.Sede.Provincia
                 prov_sede = self.ProvinceByCode(Provincia)
                 if not prov_sede:
@@ -245,10 +249,17 @@ class WizardImportFatturapa(models.TransientModel):
                 else:
                     vals["state_id"] = prov_sede[0].id
 
-            vals["register_code"] = cedPrest.DatiAnagrafici.NumeroIscrizioneAlbo
-            vals["register_regdate"] = cedPrest.DatiAnagrafici.DataIscrizioneAlbo
+            NumeroIscrizioneAlbo = False
+            DataIscrizioneAlbo = False
+            if 'NumeroIscrizioneAlbo' in cedPrest.DatiAnagrafici:
+                NumeroIscrizioneAlbo = cedPrest.DatiAnagrafici.NumeroIscrizioneAlbo
+            if 'DataIscrizioneAlbo' in cedPrest.DatiAnagrafici:
+                DataIscrizioneAlbo = cedPrest.DatiAnagrafici.DataIscrizioneAlbo
+            vals["register_code"] = NumeroIscrizioneAlbo
+            vals["register_regdate"] = DataIscrizioneAlbo
 
-            if cedPrest.DatiAnagrafici.RegimeFiscale:
+
+            if 'RegimeFiscale' in cedPrest.DatiAnagrafici and cedPrest.DatiAnagrafici.RegimeFiscale:
                 rfPos = cedPrest.DatiAnagrafici.RegimeFiscale
                 FiscalPos = fiscalPosModel.search([("code", "=", rfPos)])
                 if not FiscalPos:
@@ -258,10 +269,14 @@ class WizardImportFatturapa(models.TransientModel):
                 else:
                     vals["register_fiscalpos"] = FiscalPos[0].id
 
-            if cedPrest.IscrizioneREA:
+            if 'IscrizioneREA' in cedPrest and cedPrest.IscrizioneREA:
                 REA = cedPrest.IscrizioneREA
-                offices = self.ProvinceByCode(REA.Ufficio)
-                rea_nr = REA.NumeroREA
+                offices = False
+                rea_nr = False
+                if 'Ufficio' in REA:
+                    offices = self.ProvinceByCode(REA.Ufficio)
+                if 'NumeroREA' in REA:
+                    rea_nr = REA.NumeroREA
 
                 if not offices:
                     office_id = False
@@ -302,9 +317,9 @@ class WizardImportFatturapa(models.TransientModel):
                 vals["rea_member_type"] = REA.SocioUnico or False
                 vals["rea_liquidation_state"] = REA.StatoLiquidazione or False
 
-            if cedPrest.Contatti:
-                vals["phone"] = cedPrest.Contatti.Telefono
-                vals["email"] = cedPrest.Contatti.Email
+            if 'Contatti' in cedPrest and cedPrest.Contatti:
+                vals["phone"] = "" if 'Telefono' not in cedPrest.Contatti else cedPrest.Contatti.Telefono
+                vals["email"] = "" if 'Email' not in cedPrest.Contatti else cedPrest.Contatti.Email
             partner_model.browse(partner_id).write(vals)
         return partner_id
 
@@ -1493,10 +1508,10 @@ class WizardImportFatturapa(models.TransientModel):
             # 1.2
             partner_id = self.getCedPrest(cedentePrestatore)
             # 1.3
-            TaxRappresentative = fatt.FatturaElettronicaHeader.RappresentanteFiscale
+            TaxRappresentative = False if 'RappresentanteFiscale' not in fatt.FatturaElettronicaHeader else fatt.FatturaElettronicaHeader.RappresentanteFiscale
             # 1.5
             Intermediary = (
-                fatt.FatturaElettronicaHeader.TerzoIntermediarioOSoggettoEmittente
+                False if 'TerzoIntermediarioOSoggettoEmittente' not in fatt.FatturaElettronicaHeader else fatt.FatturaElettronicaHeader.TerzoIntermediarioOSoggettoEmittente
             )
 
             generic_inconsistencies = ""

@@ -165,19 +165,48 @@ def _fix_xmlstring(xml_string):
 
 
 def CreateFromDocument(xml_string):
-    # il codice seguente rimpiazza fatturapa.CreateFromDocument(xml_string)
-    class ObjectDict(object):
-        def __getattr__(self, attr):
-            try:
-                return getattr(self.__dict__, attr)
-            except AttributeError:
-                return None
+    from collections.abc import MutableMapping
 
-        def __getitem__(self, *attr, **kwattr):
-            return self.__dict__.__getitem__(*attr, **kwattr)
 
-        def __setitem__(self, *attr, **kwattr):
-            return self.__dict__.__setitem__(*attr, **kwattr)
+    class ObjectDict(MutableMapping):
+        '''
+        Mapping that works like both a dict and a mutable object, i.e.
+        d = D(foo='bar')
+        and
+        d.foo returns 'bar'
+        '''
+
+        # ``__init__`` method required to create instance from class.
+        def __init__(self, *args, **kwargs):
+            '''Use the object dict'''
+            self.__dict__.update(*args, **kwargs)
+
+        # The next five methods are requirements of the ABC.
+        def __setitem__(self, key, value):
+            self.__dict__[key] = value
+
+        def __getitem__(self, key):
+            return self.__dict__[key]
+
+        def __delitem__(self, key):
+            del self.__dict__[key]
+
+        def __iter__(self):
+            return iter(self.__dict__)
+
+        def __len__(self):
+            return len(self.__dict__)
+
+        # The final two methods aren't required, but nice for demo purposes:
+        def __str__(self):
+            '''returns simple dict representation of the mapping'''
+            return str(self.__dict__)
+
+        def __repr__(self):
+            '''echoes class, id, & reproducible representation in the REPL'''
+            return '{}, D({})'.format(super(ObjectDict, self).__repr__(),
+                                      self.__dict__)
+
 
     # TODO: crearlo una tantum?
     validator = xmlschema.XMLSchema(
