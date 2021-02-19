@@ -120,10 +120,13 @@ class MailThread(models.AbstractModel):
         attachment_ids = self._message_post_process_attachments(
             message_dict['attachments'], [], message_dict)
         for attachment in self.env['ir.attachment'].browse(
-                [att_id for m, att_id in attachment_ids]):
+                [att_id for m, att_id in attachment_ids['attachment_ids']]):
             if fatturapa_regex.match(attachment.name):
                 self.create_fatturapa_attachment_in(attachment, message_dict)
-        message_dict['attachment_ids'] = attachment_ids
+        if 'attachment_ids' in attachment_ids:
+            message_dict['attachment_ids'] =  [att_id for m, att_id in attachment_ids['attachment_ids']]
+        else:
+            message_dict['attachment_ids'] = attachment_ids
         self.clean_message_dict(message_dict)
         # model and res_id are only needed by
         # _message_post_process_attachments: we don't attach to
