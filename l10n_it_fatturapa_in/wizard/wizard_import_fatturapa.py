@@ -998,7 +998,8 @@ class WizardImportFatturapa(models.TransientModel):
             invoice.id, FatturaBody.DatiGenerali.DatiGeneraliDocumento
         )
 
-        self.set_roundings(FatturaBody, invoice)
+        if self.e_invoice_detail_level != "1":
+            self.set_roundings(FatturaBody, invoice)
 
         # compute the invoice
         invoice._move_autocomplete_invoice_lines_values()
@@ -1069,7 +1070,7 @@ class WizardImportFatturapa(models.TransientModel):
                     {
                         "name": DdtDataLine.NumeroDDT or "",
                         "date": DdtDataLine.DataDDT or False,
-                        "move_id": invoice_id,
+                        "invoice_id": invoice_id,
                     }
                 )
             else:
@@ -1087,7 +1088,7 @@ class WizardImportFatturapa(models.TransientModel):
                         {
                             "name": DdtDataLine.NumeroDDT or "",
                             "date": DdtDataLine.DataDDT or False,
-                            "move_id": invoice_id,
+                            "invoice_id": invoice_id,
                             "invoice_line_id": invoice_lineid,
                         }
                     )
@@ -1147,16 +1148,23 @@ class WizardImportFatturapa(models.TransientModel):
                     )
                     name = _("Rounding down") if to_round > 0.0 else _("Rounding up")
                     line_sequence += 1
-                    line_vals.append(
-                        {
-                            "sequence": line_sequence,
-                            "move_id": invoice.id,
-                            "name": name,
-                            "account_id": arrotondamenti_account_id,
-                            "price_unit": abs(to_round),
-                            "tax_ids": [(6, 0, [invoice_line_tax_id])],
-                        }
-                    )
+                    upd_vals = {
+                        "sequence": line_sequence,
+                        "move_id": invoice.id,
+                        "name": name,
+                        "account_id": arrotondamenti_account_id,
+                        "price_unit": abs(to_round),
+                        "exclude_from_invoice_tab": True,
+                        "tax_ids": [(6, 0, [invoice_line_tax_id])],
+                    }
+                    # Valutare se in caso di importazione senza rounding sia meglio
+                    # lavorare su debito e credito invece di
+                    # mettere una tassa sul valore !!
+                    #                     if to_round<0:
+                    #                        upd_vals["debit"]= abs(to_round)
+                    #                     else:
+                    #                        upd_vals["credit"]= abs(to_round)
+                    line_vals.append(upd_vals)
             if line_vals:
                 self.env["account.move.line"].with_context(
                     check_move_validity=False
