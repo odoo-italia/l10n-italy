@@ -119,13 +119,18 @@ class MailThread(models.AbstractModel):
         message_dict['res_id'] = 0
         attachment_ids = self._message_post_process_attachments(
             message_dict['attachments'], [], message_dict)
-        for attachment in self.env['ir.attachment'].browse(
-                [att_id for m, att_id in attachment_ids['attachment_ids']]):
-            if fatturapa_regex.match(attachment.name):
-                self.create_fatturapa_attachment_in(attachment, message_dict)
+
         if 'attachment_ids' in attachment_ids:
+            for attachment in self.env['ir.attachment'].browse(
+                [att_id for m, att_id in attachment_ids['attachment_ids']]):
+                if fatturapa_regex.match(attachment.name):
+                    self.create_fatturapa_attachment_in(attachment, message_dict)
             message_dict['attachment_ids'] =  [att_id for m, att_id in attachment_ids['attachment_ids']]
         else:
+            for attachment in self.env['ir.attachment'].browse(
+                [att_id for m, att_id in attachment_ids]):
+                if fatturapa_regex.match(attachment.name):
+                    self.create_fatturapa_attachment_in(attachment, message_dict)
             message_dict['attachment_ids'] = attachment_ids
         self.clean_message_dict(message_dict)
         # model and res_id are only needed by
