@@ -103,6 +103,10 @@ class WizardExportFatturapa(models.TransientModel):
                 .browse(invoice_ids)
             )
 
+            for inv in invoice_ids:
+                if not inv.fatturapa_doc_attachments and self.report_print_menu:
+                    self.generate_attach_report(inv)
+
             fatturapa = EFatturaOut(self, partner, invoice_ids, progressivo_invio)
 
             attach = self.saveAttachment(fatturapa, progressivo_invio)
@@ -133,10 +137,10 @@ class WizardExportFatturapa(models.TransientModel):
             .with_context(lang=None)
             .search([("binding_model_id", "=", binding_model_id), ("name", "=", name)])
         )
-        attachment, attachment_type = report_model.render_qweb_pdf(inv.ids)
+        attachment, attachment_type = report_model._render_qweb_pdf(inv.ids)
         att_id = self.env["ir.attachment"].create(
             {
-                "name": "{}.pdf".format(inv.number),
+                "name": "{}.pdf".format(inv.name),
                 "type": "binary",
                 "datas": base64.encodebytes(attachment),
                 "res_model": "account.move",
