@@ -118,15 +118,18 @@ class WizardImportFatturapa(models.TransientModel):
         if not DatiAnagrafici:
             return False
         partner_model = self.env["res.partner"]
-        cf = DatiAnagrafici.CodiceFiscale or False
+        cf = False if 'CodiceFiscale' not in DatiAnagrafici else DatiAnagrafici.CodiceFiscale
         vat = False
-        if DatiAnagrafici.IdFiscaleIVA:
+        if 'IdFiscaleIVA' in DatiAnagrafici:
             # Format Italian VAT ID to always have 11 char
             # to avoid validation error when creating the given partner
-            if DatiAnagrafici.IdFiscaleIVA.IdPaese.upper() == "IT":
+            IdPaese = False if 'IdPaese' not in DatiAnagrafici.IdFiscaleIVA else DatiAnagrafici.IdFiscaleIVA.IdPaese
+            IdCodice = "0" if 'IdCodice' not in DatiAnagrafici.IdFiscaleIVA else DatiAnagrafici.IdFiscaleIVA.IdCodice
+
+            if IdPaese.upper() == "IT":
                 vat = "{}{}".format(
-                    DatiAnagrafici.IdFiscaleIVA.IdPaese,
-                    DatiAnagrafici.IdFiscaleIVA.IdCodice.rjust(11, "0"),
+                    IdPaese,
+                    IdCodice.rjust(11, "0"),
                 )
             else:
                 vat = "{}{}".format(
@@ -181,7 +184,7 @@ class WizardImportFatturapa(models.TransientModel):
         else:
             # partner to be created
             country_id = False
-            if DatiAnagrafici.IdFiscaleIVA:
+            if 'IdFiscaleIVA' in DatiAnagrafici and DatiAnagrafici.IdFiscaleIVA:
                 CountryCode = DatiAnagrafici.IdFiscaleIVA.IdPaese
                 countries = self.CountryByCode(CountryCode)
                 if countries:
@@ -190,20 +193,22 @@ class WizardImportFatturapa(models.TransientModel):
                     raise UserError(
                         _("Country Code %s not found in system.") % CountryCode
                     )
+            denominazione = False if 'Denominazione' not in DatiAnagrafici.Anagrafica else DatiAnagrafici.Anagrafica.Denominazione
+            eori_code = "" if 'CodEORI' not in DatiAnagrafici.Anagrafica else DatiAnagrafici.Anagrafica.CodEORI
             vals = {
                 "vat": vat,
                 "fiscalcode": cf,
                 "is_company": (
-                    DatiAnagrafici.Anagrafica.Denominazione and True or False
+                    denominazione and True or False
                 ),
-                "eori_code": DatiAnagrafici.Anagrafica.CodEORI or "",
+                "eori_code": eori_code,
                 "country_id": country_id,
             }
-            if DatiAnagrafici.Anagrafica.Nome:
+            if 'Nome' in DatiAnagrafici.Anagrafica and DatiAnagrafici.Anagrafica.Nome:
                 vals["firstname"] = DatiAnagrafici.Anagrafica.Nome
-            if DatiAnagrafici.Anagrafica.Cognome:
+            if 'Cognome' in DatiAnagrafici.Anagrafica and DatiAnagrafici.Anagrafica.Cognome:
                 vals["lastname"] = DatiAnagrafici.Anagrafica.Cognome
-            if DatiAnagrafici.Anagrafica.Denominazione:
+            if 'Denominazione' in DatiAnagrafici.Anagrafica and DatiAnagrafici.Anagrafica.Denominazione:
                 vals["name"] = DatiAnagrafici.Anagrafica.Denominazione
 
             return partner_model.create(vals).id
@@ -313,9 +318,9 @@ class WizardImportFatturapa(models.TransientModel):
                 else:
                     vals["rea_code"] = REA.NumeroREA
 
-                vals["rea_capital"] = REA.CapitaleSociale or 0.0
-                vals["rea_member_type"] = REA.SocioUnico or False
-                vals["rea_liquidation_state"] = REA.StatoLiquidazione or False
+                vals["rea_capital"] = 0.0 if 'CapitaleSociale' not in REA else REA.CapitaleSociale
+                vals["rea_member_type"] = False if 'SocioUnico' not in REA else REA.SocioUnico
+                vals["rea_liquidation_state"] = False if 'StatoLiquidazione' not in REA else REA.StatoLiquidazione
 
             if 'Contatti' in cedPrest and cedPrest.Contatti:
                 vals["phone"] = "" if 'Telefono' not in cedPrest.Contatti else cedPrest.Contatti.Telefono
@@ -342,7 +347,9 @@ class WizardImportFatturapa(models.TransientModel):
     # move_line.tax_ids
     def _prepare_generic_line_data(self, line):
         retLine = {}
-        account_taxes = self.get_account_taxes(line.AliquotaIVA, line.Natura)
+        natura = None if 'Natura' not in line else line.Natura
+        aliquota = 0.0 if 'AliquotaIVA' not in line else line.AliquotaIVA
+        account_taxes = self.get_account_taxes(aliquota,natura)
         if account_taxes:
             retLine["tax_ids"] = [(6, 0, [account_taxes[0].id])]
         return retLine
@@ -424,7 +431,7 @@ class WizardImportFatturapa(models.TransientModel):
     def get_line_product(self, line, partner):
         product = False
         supplier_info = self.env["product.supplierinfo"]
-        if len(line.CodiceArticolo or []) == 1:
+        if 'CodiceArticolo' in line and len(line.CodiceArticolo or []) == 1:
             supplier_code = line.CodiceArticolo[0].CodiceValore
             supplier_infos = supplier_info.search(
                 [("product_code", "=", supplier_code), ("name", "=", partner.id)]
@@ -513,33 +520,34 @@ class WizardImportFatturapa(models.TransientModel):
                 "price_unit": float(line.PrezzoUnitario),
             }
         )
-        if line.Quantita is None:
+        if 'Quantita' not in line or line.Quantita is None:
             retLine["quantity"] = 1.0
         else:
             retLine["quantity"] = float(line.Quantita)
         if (
+            'PrezzoUnitario' in line and 'Quantita' in line and 'ScontoMaggiorazione' in line and
             float(line.PrezzoUnitario)
             and line.Quantita
             and float(line.Quantita)
             and line.ScontoMaggiorazione  # Quantita not required
         ):
             retLine["discount"] = self._computeDiscount(line)
-        if line.RiferimentoAmministrazione:
+        if 'RiferimentoAmministrazione' in line and line.RiferimentoAmministrazione:
             retLine["admin_ref"] = line.RiferimentoAmministrazione
-        if wt_founds and line.Ritenuta:
+        if wt_founds and 'Ritenuta' in line and line.Ritenuta:
             retLine["invoice_line_tax_wt_ids"] = [(6, 0, [x.id for x in wt_founds])]
 
         return retLine
 
     def _prepareRelDocsLine(self, invoice_id, line, doc_type):
         res = []
-        lineref = line.RiferimentoNumeroLinea or False
-        IdDoc = line.IdDocumento or "Error"
-        Data = line.Data or False
-        NumItem = line.NumItem or ""
-        Code = line.CodiceCommessaConvenzione or ""
-        Cig = line.CodiceCIG or ""
-        Cup = line.CodiceCUP or ""
+        lineref = False if 'RiferimentoNumeroLinea' not in line else (line.RiferimentoNumeroLinea or False)
+        IdDoc = "Error" if 'IdDocumento' not in line else (line.IdDocumento or "Error")
+        Data =  False if 'Data' not in line else (line.Data or False)
+        NumItem = "" if 'NumItem' not in line else (line.NumItem or "")
+        Code = "" if 'CodiceCommessaConvenzione' not in line else (line.CodiceCommessaConvenzione or "")
+        Cig = "" if 'CodiceCIG' not in line else (line.CodiceCIG or "")
+        Cup = "" if 'CodiceCUP' not in line else (line.CodiceCUP or "")
         invoice_lineid = False
         if lineref:
             for numline in lineref:
@@ -582,15 +590,15 @@ class WizardImportFatturapa(models.TransientModel):
         return res
 
     def _prepareWelfareLine(self, invoice_id, line):
-        TipoCassa = line.TipoCassa or False
-        AlCassa = line.AlCassa and (float(line.AlCassa) / 100) or None
-        ImportoContributoCassa = (
-            line.ImportoContributoCassa and float(line.ImportoContributoCassa) or None
+        TipoCassa = False if 'TipoCassa' not in line else line.TipoCassa
+        AlCassa = None if 'AlCassa' not in line else (float(line.AlCassa) / 100)
+        ImportoContributoCassa = None if 'ImportoContributoCassa' not in line else (
+            line.ImportoContributoCassa and float(line.ImportoContributoCassa)
         )
-        ImponibileCassa = line.ImponibileCassa and float(line.ImponibileCassa) or None
-        AliquotaIVA = line.AliquotaIVA and (float(line.AliquotaIVA) / 100) or None
-        Ritenuta = line.Ritenuta or ""
-        Natura = line.Natura or False
+        ImponibileCassa = None if 'ImponibileCassa' not in line else (line.ImponibileCassa and float(line.ImponibileCassa) or None)
+        AliquotaIVA = None if 'AliquotaIVA' not in line else (line.AliquotaIVA and (float(line.AliquotaIVA) / 100) or None)
+        Ritenuta = "" if 'Ritenuta' not in line else line.Ritenuta
+        Natura = False if 'Natura' not in line else line.Natura or False
         kind_id = False
         if Natura:
             kind = self.env["account.tax.kind"].search([("code", "=", Natura)])
@@ -599,7 +607,7 @@ class WizardImportFatturapa(models.TransientModel):
             else:
                 kind_id = kind[0].id
 
-        RiferimentoAmministrazione = line.RiferimentoAmministrazione or ""
+        RiferimentoAmministrazione = "" if 'RiferimentoAmministrazione' not in line else line.RiferimentoAmministrazione
         WelfareTypeModel = self.env["welfare.fund.type"]
         if not TipoCassa:
             raise UserError(_("Welfare Fund is not defined."))
@@ -625,9 +633,9 @@ class WizardImportFatturapa(models.TransientModel):
         return res
 
     def _prepareDiscRisePriceLine(self, line_id, line):
-        Tipo = line.Tipo or False
-        Percentuale = line.Percentuale and float(line.Percentuale) or 0.0
-        Importo = line.Importo and float(line.Importo) or 0.0
+        Tipo = False if 'Tipo' not in line.Tipo else line.Tipo
+        Percentuale = 0.0 if 'Percentuale' not in line else float(line.Percentuale)
+        Importo = 0.0 if 'Importo' not in line else float(line.Importo)
         res = {
             "percentage": Percentuale,
             "amount": Importo,
@@ -646,21 +654,21 @@ class WizardImportFatturapa(models.TransientModel):
     def _addGlobalDiscount(self, invoice_id, DatiGeneraliDocumento):
         discount = 0.0
         if (
-            DatiGeneraliDocumento.ScontoMaggiorazione
+            'ScontoMaggiorazione' in DatiGeneraliDocumento and DatiGeneraliDocumento.ScontoMaggiorazione
             and self.e_invoice_detail_level == "2"
         ):
             invoice = self.env["account.move"].browse(invoice_id)
             for DiscRise in DatiGeneraliDocumento.ScontoMaggiorazione:
-                if DiscRise.Percentuale:
+                if 'Percentuale' in DiscRise and DiscRise.Percentuale:
                     amount = invoice.amount_total * (float(DiscRise.Percentuale) / 100)
-                    if DiscRise.Tipo == "SC":
+                    if 'Tipo' in DiscRise and DiscRise.Tipo == "SC":
                         discount -= amount
-                    elif DiscRise.Tipo == "MG":
+                    elif 'Tipo' in DiscRise and DiscRise.Tipo == "MG":
                         discount += amount
-                elif DiscRise.Importo:
-                    if DiscRise.Tipo == "SC":
+                elif 'Importo' in DiscRise and DiscRise.Importo:
+                    if 'Tipo' in DiscRise and DiscRise.Tipo == "SC":
                         discount -= float(DiscRise.Importo)
-                    elif DiscRise.Tipo == "MG":
+                    elif 'Tipo' in DiscRise and DiscRise.Tipo == "MG":
                         discount += float(DiscRise.Importo)
             journal = self.get_purchase_journal(invoice.company_id)
             credit_account_id = journal.default_account_id.id
@@ -684,7 +692,7 @@ class WizardImportFatturapa(models.TransientModel):
         return True
 
     def _createPaymentsLine(self, payment_id, line, partner_id):
-        details = line.DettaglioPagamento or False
+        details = False if 'DettaglioPagamento' not in line else line.DettaglioPagamento
         if details:
             PaymentModel = self.env["fatturapa.payment.detail"]
             PaymentMethodModel = self.env["fatturapa.payment_method"]
@@ -702,34 +710,33 @@ class WizardImportFatturapa(models.TransientModel):
                         )
                     )
                 val = {
-                    "recipient": dline.Beneficiario,
+                    "recipient": False if 'Beneficiario' not in dline else dline.Beneficiario,
                     "fatturapa_pm_id": method[0].id,
-                    "payment_term_start": dline.DataRiferimentoTerminiPagamento
-                    or False,
-                    "payment_days": dline.GiorniTerminiPagamento or 0,
-                    "payment_due_date": dline.DataScadenzaPagamento or False,
-                    "payment_amount": dline.ImportoPagamento or 0.0,
-                    "post_office_code": dline.CodUfficioPostale or "",
-                    "recepit_surname": dline.CognomeQuietanzante or "",
-                    "recepit_name": dline.NomeQuietanzante or "",
-                    "recepit_cf": dline.CFQuietanzante or "",
-                    "recepit_title": dline.TitoloQuietanzante or "1",
-                    "payment_bank_name": dline.IstitutoFinanziario or "",
-                    "payment_bank_iban": dline.IBAN or "",
-                    "payment_bank_abi": dline.ABI or "",
-                    "payment_bank_cab": dline.CAB or "",
-                    "payment_bank_bic": dline.BIC or "",
+                    "payment_term_start": False if 'DataRiferimentoTerminiPagamento' not in dline else dline.DataRiferimentoTerminiPagamento,
+                    "payment_days": 0 if 'GiorniTerminiPagamento' not in dline else dline.GiorniTerminiPagamento,
+                    "payment_due_date": False if 'DataScadenzaPagamento' not in dline else dline.DataScadenzaPagamento,
+                    "payment_amount": 0.0 if 'ImportoPagamento' not in dline else dline.ImportoPagamento,
+                    "post_office_code": "" if 'CodUfficioPostale' not in dline else dline.CodUfficioPostale,
+                    "recepit_surname": "" if 'CognomeQuietanzante' not in dline else dline.CognomeQuietanzante,
+                    "recepit_name": "" if 'NomeQuietanzante' not in dline else dline.NomeQuietanzante,
+                    "recepit_cf": "" if 'CFQuietanzante' not in dline else dline.CFQuietanzante,
+                    "recepit_title": "1" if 'TitoloQuietanzante' not in dline else dline.TitoloQuietanzante,
+                    "payment_bank_name": "" if 'IstitutoFinanziario' not in dline else dline.IstitutoFinanziario,
+                    "payment_bank_iban": "" if 'IBAN' not in dline else dline.IBAN,
+                    "payment_bank_abi": "" if 'ABI' not in dline else dline.ABI,
+                    "payment_bank_cab": "" if 'CAB' not in dline else dline.CAB,
+                    "payment_bank_bic": "" if 'BIC' not in dline else dline.BIC,
                     "payment_bank": False,
-                    "prepayment_discount": dline.ScontoPagamentoAnticipato or 0.0,
-                    "max_payment_date": dline.DataLimitePagamentoAnticipato or False,
-                    "penalty_amount": dline.PenalitaPagamentiRitardati or 0.0,
-                    "penalty_date": dline.DataDecorrenzaPenale or False,
-                    "payment_code": dline.CodicePagamento or "",
+                    "prepayment_discount": 0.0 if 'ScontoPagamentoAnticipato' not in dline else dline.ScontoPagamentoAnticipato,
+                    "max_payment_date": False if 'DataLimitePagamentoAnticipato' not in dline else dline.DataLimitePagamentoAnticipato,
+                    "penalty_amount": 0.0 if 'PenalitaPagamentiRitardati' not in dline else dline.PenalitaPagamentiRitardati,
+                    "penalty_date": False if 'DataDecorrenzaPenale' not in dline else dline.DataDecorrenzaPenale,
+                    "payment_code": "" if 'CodicePagamento' not in dline else dline.CodicePagamento,
                     "payment_data_id": payment_id,
                 }
                 bank = False
                 payment_bank_id = False
-                if dline.BIC:
+                if 'BIC' in dline and dline.BIC:
                     banks = BankModel.search([("bic", "=", dline.BIC.strip())])
                     if not banks:
                         if not dline.IstitutoFinanziario:
@@ -749,7 +756,7 @@ class WizardImportFatturapa(models.TransientModel):
                             )
                     else:
                         bank = banks[0]
-                if dline.IBAN:
+                if 'IBAN' in dline and dline.IBAN:
                     SearchDom = [
                         ("acc_number", "=", pretty_iban(dline.IBAN.strip())),
                         ("partner_id", "=", partner_id),
@@ -766,7 +773,7 @@ class WizardImportFatturapa(models.TransientModel):
                             )
                             % (
                                 dline.IBAN.strip() or "",
-                                dline.IstitutoFinanziario or "",
+                                "" if 'IstitutoFinanziario' not in dline else (dline.IstitutoFinanziario or ""),
                             )
                         )
                     elif not payment_banks and bank:
@@ -775,8 +782,8 @@ class WizardImportFatturapa(models.TransientModel):
                                 "acc_number": dline.IBAN.strip(),
                                 "partner_id": partner_id,
                                 "bank_id": bank.id,
-                                "bank_name": dline.IstitutoFinanziario or bank.name,
-                                "bank_bic": dline.BIC or bank.bic,
+                                "bank_name": bank.name if 'IstitutoFinanziario' not in dline else (dline.IstitutoFinanziario or bank.name),
+                                "bank_bic": bank.bic if 'BIC' not in dline else (dline.BIC or bank.bic),
                             }
                         ).id
                     if payment_banks:
@@ -789,23 +796,29 @@ class WizardImportFatturapa(models.TransientModel):
 
     # TODO sul partner?
     def set_StabileOrganizzazione(self, CedentePrestatore, invoice):
-        if CedentePrestatore.StabileOrganizzazione:
+        if 'StabileOrganizzazione' in CedentePrestatore and CedentePrestatore.StabileOrganizzazione:
             invoice.efatt_stabile_organizzazione_indirizzo = (
+                False if 'Indirizzo' not in CedentePrestatore.StabileOrganizzazione else
                 CedentePrestatore.StabileOrganizzazione.Indirizzo
             )
             invoice.efatt_stabile_organizzazione_civico = (
+                False if 'NumeroCivico' not in CedentePrestatore.StabileOrganizzazione else
                 CedentePrestatore.StabileOrganizzazione.NumeroCivico
             )
             invoice.efatt_stabile_organizzazione_cap = (
+                False if 'CAP' not in CedentePrestatore.StabileOrganizzazione else
                 CedentePrestatore.StabileOrganizzazione.CAP
             )
             invoice.efatt_stabile_organizzazione_comune = (
+                False if 'Comune' not in CedentePrestatore.StabileOrganizzazione else
                 CedentePrestatore.StabileOrganizzazione.Comune
             )
             invoice.efatt_stabile_organizzazione_provincia = (
+                False if 'Provincia' not in CedentePrestatore.StabileOrganizzazione else
                 CedentePrestatore.StabileOrganizzazione.Provincia
             )
             invoice.efatt_stabile_organizzazione_nazione = (
+                False if 'Nazione' not in CedentePrestatore.StabileOrganizzazione else
                 CedentePrestatore.StabileOrganizzazione.Nazione
             )
 
@@ -822,45 +835,60 @@ class WizardImportFatturapa(models.TransientModel):
         return journals[0]
 
     def create_e_invoice_line(self, line):
+        line_number= 0 if 'NumeroLinea' not in line else int(line.NumeroLinea or 0)
+        service_type= False if 'TipoCessionePrestazione' not in line else line.TipoCessionePrestazione
+        name= line.Descrizione
+        qty= 0 if 'Quantita' not in line else float(line.Quantita or 0)
+        uom= False if 'UnitaMisura' not in line else line.UnitaMisura
+        period_start_date= False if 'DataInizioPeriodo' not in line else line.DataInizioPeriodo
+        period_end_date= False if 'DataFinePeriodo' not in line else line.DataFinePeriodo
+        unit_price= False if 'PrezzoUnitario' not in line else float(line.PrezzoUnitario or 0)
+        total_price= False if 'PrezzoTotale' not in line else float(line.PrezzoTotale or 0)
+        tax_amount= 0 if 'AliquotaIVA' not in line else float(line.AliquotaIVA or 0)
+        wt_amount= False if 'Ritenuta' not in line else line.Ritenuta
+        tax_kind= False if 'Natura' not in line else line.Natura
+        admin_ref= False if 'RiferimentoAmministrazione' not in line else line.RiferimentoAmministrazione
+
         vals = {
-            "line_number": int(line.NumeroLinea or 0),
-            "service_type": line.TipoCessionePrestazione,
-            "name": line.Descrizione,
-            "qty": float(line.Quantita or 0),
-            "uom": line.UnitaMisura,
-            "period_start_date": line.DataInizioPeriodo,
-            "period_end_date": line.DataFinePeriodo,
-            "unit_price": float(line.PrezzoUnitario or 0),
-            "total_price": float(line.PrezzoTotale or 0),
-            "tax_amount": float(line.AliquotaIVA or 0),
-            "wt_amount": line.Ritenuta,
-            "tax_kind": line.Natura,
-            "admin_ref": line.RiferimentoAmministrazione,
-        }
+                   "line_number": line_number,
+                   "service_type": service_type,
+                   "name": name,
+                   "qty": qty,
+                   "uom": uom,
+                   "period_start_date": period_start_date,
+                   "period_end_date": period_end_date,
+                   "unit_price": unit_price,
+                   "total_price": total_price,
+                   "tax_amount": tax_amount,
+                   "wt_amount": wt_amount,
+                   "tax_kind": tax_kind,
+                   "admin_ref": admin_ref,
+                }
+
         einvoiceline = self.env["einvoice.line"].create(vals)
-        if line.CodiceArticolo:
+        if 'CodiceArticolo' in line and line.CodiceArticolo:
             for caline in line.CodiceArticolo:
                 self.env["fatturapa.article.code"].create(
                     {
-                        "name": caline.CodiceTipo or "",
-                        "code_val": caline.CodiceValore or "",
+                        "name": "" if 'CodiceTipo' not in caline.CodiceTipo else caline.CodiceTipo,
+                        "code_val": "" if 'CodiceValore' not in caline.CodiceValore else caline.CodiceValore,
                         "e_invoice_line_id": einvoiceline.id,
                     }
                 )
-        if line.ScontoMaggiorazione:
+        if 'ScontoMaggiorazione' in line and line.ScontoMaggiorazione:
             for DiscRisePriceLine in line.ScontoMaggiorazione:
                 DiscRisePriceVals = self.with_context(
                     drtype="e_invoice_line_id"
                 )._prepareDiscRisePriceLine(einvoiceline.id, DiscRisePriceLine)
                 self.env["discount.rise.price"].create(DiscRisePriceVals)
-        if line.AltriDatiGestionali:
+        if 'AltriDatiGestionali' in line and line.AltriDatiGestionali:
             for dato in line.AltriDatiGestionali:
                 self.env["einvoice.line.other.data"].create(
                     {
-                        "name": dato.TipoDato,
-                        "text_ref": dato.RiferimentoTesto,
-                        "num_ref": float(dato.RiferimentoNumero or 0),
-                        "date_ref": dato.RiferimentoData,
+                        "name": "" if 'TipoDato' not in dato else dato.TipoDato,
+                        "text_ref": "" if 'RiferimentoTesto' not in dato else dato.RiferimentoTesto,
+                        "num_ref": 0 if 'RiferimentoNumero' not in dato else float(dato.RiferimentoNumero or 0),
+                        "date_ref": False if 'RiferimentoData' not in dato else dato.RiferimentoData,
                         "e_invoice_line_id": einvoiceline.id,
                     }
                 )
@@ -893,7 +921,7 @@ class WizardImportFatturapa(models.TransientModel):
         # 2.1.1
         docType_id = False
         invtype = "in_invoice"
-        docType = FatturaBody.DatiGenerali.DatiGeneraliDocumento.TipoDocumento
+        docType = False if 'TipoDocumento' not in FatturaBody.DatiGenerali.DatiGeneraliDocumento else FatturaBody.DatiGenerali.DatiGeneraliDocumento.TipoDocumento
         if docType:
             docType_record = ftpa_doctype_model.search([("code", "=", docType)])
             if docType_record:
@@ -903,7 +931,7 @@ class WizardImportFatturapa(models.TransientModel):
             if docType == "TD04":
                 invtype = "in_refund"
         # 2.1.1.11
-        causLst = FatturaBody.DatiGenerali.DatiGeneraliDocumento.Causale
+        causLst = False if 'Causale' not in FatturaBody.DatiGenerali.DatiGeneraliDocumento else FatturaBody.DatiGenerali.DatiGeneraliDocumento.Causale
         if causLst:
             for rel_doc in causLst:
                 comment += rel_doc + "\n"
@@ -925,7 +953,7 @@ class WizardImportFatturapa(models.TransientModel):
             if company.in_invoice_registration_date == "rec_date"
             else e_invoice_date,
             "fiscal_document_type_id": docType_id,
-            "sender": fatt.FatturaElettronicaHeader.SoggettoEmittente or False,
+            "sender": False if 'SoggettoEmittente' not in fatt.FatturaElettronicaHeader else fatt.FatturaElettronicaHeader.SoggettoEmittente,
             "move_type": invtype,
             "partner_id": partner_id,
             "currency_id": currency[0].id,
@@ -965,15 +993,15 @@ class WizardImportFatturapa(models.TransientModel):
 
         rel_docs_dict = {
             # 2.1.2
-            "order": FatturaBody.DatiGenerali.DatiOrdineAcquisto,
+            "order": False if 'DatiOrdineAcquisto' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiOrdineAcquisto,
             # 2.1.3
-            "contract": FatturaBody.DatiGenerali.DatiContratto,
+            "contract": False if 'DatiContratto' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiContratto,
             # 2.1.4
-            "agreement": FatturaBody.DatiGenerali.DatiConvenzione,
+            "agreement": False if 'DatiConvenzione' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiConvenzione,
             # 2.1.5
-            "reception": FatturaBody.DatiGenerali.DatiRicezione,
+            "reception": False if 'DatiRicezione' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiRicezione,
             # 2.1.6
-            "invoice": FatturaBody.DatiGenerali.DatiFattureCollegate,
+            "invoice": False if 'DatiFattureCollegate' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiFattureCollegate,
         }
 
         for rel_doc_key, rel_doc_data in rel_docs_dict.items():
@@ -1009,9 +1037,10 @@ class WizardImportFatturapa(models.TransientModel):
         # 2.5
         self.set_attachments_data(FatturaBody, invoice)
 
-        self._addGlobalDiscount(
-            invoice.id, FatturaBody.DatiGenerali.DatiGeneraliDocumento
-        )
+        if 'DatiGeneraliDocumento' in FatturaBody.DatiGenerali:
+            self._addGlobalDiscount(
+                invoice.id, FatturaBody.DatiGenerali.DatiGeneraliDocumento
+            )
 
         self.set_roundings(FatturaBody, invoice)
 
@@ -1046,26 +1075,26 @@ class WizardImportFatturapa(models.TransientModel):
                 )
 
     def set_parent_invoice_data(self, FatturaBody, invoice):
-        ParentInvoice = FatturaBody.DatiGenerali.FatturaPrincipale
+        ParentInvoice = False if 'FatturaPrincipale' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.FatturaPrincipale
         if ParentInvoice:
             parentinv_vals = {
-                "related_invoice_code": ParentInvoice.NumeroFatturaPrincipale or "",
-                "related_invoice_date": ParentInvoice.DataFatturaPrincipale or False,
+                "related_invoice_code": "" if 'NumeroFatturaPrincipale' in ParentInvoice else ParentInvoice.NumeroFatturaPrincipale,
+                "related_invoice_date": False if 'DataFatturaPrincipale' in ParentInvoice else ParentInvoice.DataFatturaPrincipale,
             }
             invoice.write(parentinv_vals)
 
     def set_vehicles_data(self, FatturaBody, invoice):
-        Vehicle = FatturaBody.DatiVeicoli
+        Vehicle = False if 'DatiVeicoli' not in FatturaBody else FatturaBody.DatiVeicoli
         if Vehicle:
             veicle_vals = {
-                "vehicle_registration": Vehicle.Data or False,
-                "total_travel": Vehicle.TotalePercorso or "",
+                "vehicle_registration": False if 'Data' not in Vehicle else Vehicle.Data,
+                "total_travel": "" if 'TotalePercorso' not in Vehicle else Vehicle.TotalePercorso,
             }
             invoice.write(veicle_vals)
 
     def set_attachments_data(self, FatturaBody, invoice):
         invoice_id = invoice.id
-        AttachmentsData = FatturaBody.Allegati
+        AttachmentsData = False if 'Allegati'not in FatturaBody else FatturaBody.Allegati
         if AttachmentsData:
             self.env["fatturapa.attachment.in"].extract_attachments(
                 AttachmentsData, invoice_id
@@ -1073,17 +1102,17 @@ class WizardImportFatturapa(models.TransientModel):
 
     def set_ddt_data(self, FatturaBody, invoice):
         invoice_id = invoice.id
-        DdtDatas = FatturaBody.DatiGenerali.DatiDDT
+        DdtDatas = False if 'DatiDDT' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiDDT
         if not DdtDatas:
             return
         invoice_line_model = self.env["account.move.line"]
         DdTModel = self.env["fatturapa.related_ddt"]
         for DdtDataLine in DdtDatas:
-            if not DdtDataLine.RiferimentoNumeroLinea:
+            if not 'RiferimentoNumeroLinea' in DdtDataLine or not DdtDataLine.RiferimentoNumeroLinea:
                 DdTModel.create(
                     {
-                        "name": DdtDataLine.NumeroDDT or "",
-                        "date": DdtDataLine.DataDDT or False,
+                        "name": "" if 'NumeroDDT' not in DdtDataLine else DdtDataLine.NumeroDDT,
+                        "date": False if 'DataDDT' not in DdtDataLine else DdtDataLine.DataDDT,
                         "move_id": invoice_id,
                     }
                 )
@@ -1100,25 +1129,25 @@ class WizardImportFatturapa(models.TransientModel):
                         invoice_lineid = invoice_lines[0].id
                     DdTModel.create(
                         {
-                            "name": DdtDataLine.NumeroDDT or "",
-                            "date": DdtDataLine.DataDDT or False,
+                            "name": "" if 'NumeroDDT' not in DdtDataLine else DdtDataLine.NumeroDDT,
+                            "date": False if 'DataDDT' not in DdtDataLine else DdtDataLine.DataDDT,
                             "move_id": invoice_id,
                             "invoice_line_id": invoice_lineid,
                         }
                     )
 
     def set_art73(self, FatturaBody, invoice_data):
-        if FatturaBody.DatiGenerali.DatiGeneraliDocumento.Art73:
+        if 'Art73' in FatturaBody.DatiGenerali.DatiGeneraliDocumento:
             invoice_data["art73"] = True
 
     def set_roundings(self, FatturaBody, invoice):
         rounding = 0.0
-        if FatturaBody.DatiBeniServizi.DatiRiepilogo:
+        if 'DatiRiepilogo' in FatturaBody.DatiBeniServizi:
             for summary in FatturaBody.DatiBeniServizi.DatiRiepilogo:
-                rounding += float(summary.Arrotondamento or 0.0)
-        if FatturaBody.DatiGenerali.DatiGeneraliDocumento:
+                rounding += 0.0 if 'Arrotondamento' not in summary else float(summary.Arrotondamento or 0.0)
+        if 'DatiGeneraliDocumento' in FatturaBody.DatiGenerali:
             summary = FatturaBody.DatiGenerali.DatiGeneraliDocumento
-            rounding += float(summary.Arrotondamento or 0.0)
+            rounding += 0.0 if 'Arrotondamento' not in summary else float(summary.Arrotondamento or 0.0)
 
         if rounding:
             arrotondamenti_attivi_account_id = (
@@ -1145,7 +1174,7 @@ class WizardImportFatturapa(models.TransientModel):
             line_vals = []
             for summary in FatturaBody.DatiBeniServizi.DatiRiepilogo:
                 # XXX fallisce cattivo se non trova l'imposta Arrotondamento
-                to_round = float(summary.Arrotondamento or 0.0)
+                to_round = 0.0 if 'Arrotondamento' not in summary else float(summary.Arrotondamento or 0.0)
                 if to_round != 0.0:
                     account_taxes = self.get_account_taxes(
                         summary.AliquotaIVA, summary.Natura
@@ -1178,14 +1207,14 @@ class WizardImportFatturapa(models.TransientModel):
                 ).create(line_vals)
 
     def set_efatt_rounding(self, FatturaBody, invoice_data):
-        if FatturaBody.DatiGenerali.DatiGeneraliDocumento.Arrotondamento:
+        if 'Arrotondamento' in FatturaBody.DatiGenerali.DatiGeneraliDocumento:
             invoice_data["efatt_rounding"] = float(
                 FatturaBody.DatiGenerali.DatiGeneraliDocumento.Arrotondamento
             )
 
     def set_activity_progress(self, FatturaBody, invoice):
         invoice_id = invoice.id
-        SalDatas = FatturaBody.DatiGenerali.DatiSAL
+        SalDatas = False if 'DatiSAL' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiSAL
         if SalDatas:
             SalModel = self.env["faturapa.activity.progress"]
             for SalDataLine in SalDatas:
@@ -1209,19 +1238,20 @@ class WizardImportFatturapa(models.TransientModel):
 
     def set_payments_data(self, FatturaBody, invoice, partner_id):
         invoice_id = invoice.id
-        PaymentsData = FatturaBody.DatiPagamento
+        PaymentsData = False if 'DatiPagamento' not in FatturaBody else FatturaBody.DatiPagamento
         partner = self.env["res.partner"].browse(partner_id)
         if not partner.property_supplier_payment_term_id:
-            due_dates = self._get_last_due_date(FatturaBody.DatiPagamento)
-            if due_dates:
-                self.env["account.move"].browse(
-                    invoice_id
-                ).invoice_date_due = due_dates[0]
+            if 'DatiPagamento' in FatturaBody:
+                due_dates = self._get_last_due_date(FatturaBody.DatiPagamento)
+                if due_dates:
+                    self.env["account.move"].browse(
+                        invoice_id
+                    ).invoice_date_due = due_dates[0]
         if PaymentsData:
             PaymentDataModel = self.env["fatturapa.payment.data"]
             PaymentTermsModel = self.env["fatturapa.payment_term"]
             for PaymentLine in PaymentsData:
-                cond = PaymentLine.CondizioniPagamento or False
+                cond = False if 'CondizioniPagamento' not in PaymentLine else PaymentLine.CondizioniPagamento
                 if not cond:
                     raise UserError(_("Payment method code not found in document."))
                 terms = PaymentTermsModel.search([("code", "=", cond)])
@@ -1235,7 +1265,7 @@ class WizardImportFatturapa(models.TransientModel):
                 self._createPaymentsLine(PayDataId, PaymentLine, partner_id)
 
     def set_withholding_tax(self, FatturaBody, invoice_data):
-        Withholdings = FatturaBody.DatiGenerali.DatiGeneraliDocumento.DatiRitenuta
+        Withholdings = False if 'DatiRitenuta' not in FatturaBody.DatiGenerali.DatiGeneraliDocumento else FatturaBody.DatiGenerali.DatiGeneraliDocumento.DatiRitenuta
         if not Withholdings:
             return None
         invoice_data["ftpa_withholding_ids"] = []
@@ -1290,7 +1320,7 @@ class WizardImportFatturapa(models.TransientModel):
         if not self.e_invoice_detail_level == "2":
             return
 
-        Welfares = FatturaBody.DatiGenerali.DatiGeneraliDocumento.DatiCassaPrevidenziale
+        Welfares = False if 'DatiCassaPrevidenziale' not in FatturaBody.DatiGenerali.DatiGeneraliDocumento else FatturaBody.DatiGenerali.DatiGeneraliDocumento.DatiCassaPrevidenziale
         if not Welfares:
             return
 
@@ -1311,7 +1341,7 @@ class WizardImportFatturapa(models.TransientModel):
                     "account_id": credit_account_id,
                 }
             )
-            if welfareLine.Ritenuta:
+            if 'Ritenuta' in welfareLine and welfareLine.Ritenuta:
                 if not wt_founds:
                     raise UserError(
                         _(
@@ -1345,61 +1375,60 @@ class WizardImportFatturapa(models.TransientModel):
         return ret
 
     def set_delivery_data(self, FatturaBody, invoice):
-        Delivery = FatturaBody.DatiGenerali.DatiTrasporto
+        Delivery = False if 'DatiTrasporto' not in FatturaBody.DatiGenerali else FatturaBody.DatiGenerali.DatiTrasporto
         if Delivery:
             delivery_id = self.getCarrirerPartner(Delivery)
             delivery_dict = {
                 "carrier_id": delivery_id,
-                "transport_vehicle": Delivery.MezzoTrasporto or "",
-                "transport_reason": Delivery.CausaleTrasporto or "",
-                "number_items": Delivery.NumeroColli or 0,
-                "description": Delivery.Descrizione or "",
-                "unit_weight": Delivery.UnitaMisuraPeso or 0.0,
-                "gross_weight": Delivery.PesoLordo or 0.0,
-                "net_weight": Delivery.PesoNetto or 0.0,
-                "pickup_datetime": self._convert_datetime(Delivery.DataOraRitiro)
-                or False,
-                "transport_date": Delivery.DataInizioTrasporto or False,
-                "delivery_datetime": self._convert_datetime(Delivery.DataOraConsegna)
-                or False,
+                "transport_vehicle": "" if 'MezzoTrasporto' not in Delivery else Delivery.MezzoTrasporto,
+                "transport_reason": "" if 'CausaleTrasporto' not in Delivery else Delivery.CausaleTrasporto,
+                "number_items": 0 if 'NumeroColli' not in Delivery else Delivery.NumeroColli,
+                "description": "" if 'Descrizione' not in Delivery else Delivery.Descrizione,
+                "unit_weight": 0.0 if 'UnitaMisuraPeso' not in Delivery else Delivery.UnitaMisuraPeso,
+                "gross_weight": 0.0 if 'PesoLordo' not in Delivery else Delivery.PesoLordo,
+                "net_weight": 0.0 if 'PesoNetto' not in Delivery else Delivery.PesoNetto,
+                "pickup_datetime": False if 'DataOraRitiro' not in Delivery else Delivery.DataOraRitiro,
+                "transport_date": False if 'DataInizioTrasporto' not in Delivery else Delivery.DataInizioTrasporto,
+                "delivery_datetime": False if 'DataOraConsegna' not in Delivery else Delivery.DataOraConsegna,
                 "delivery_address": "",
-                "ftpa_incoterms": Delivery.TipoResa,
+                "ftpa_incoterms": "" if 'TipoResa' not in Delivery else Delivery.TipoResa
             }
 
-            if Delivery.IndirizzoResa:
+            if 'IndirizzoResa' in Delivery and Delivery.IndirizzoResa:
                 delivery_dict["delivery_address"] = "{}, {}\n{} - {}\n{} {}".format(
-                    Delivery.IndirizzoResa.Indirizzo or "",
-                    Delivery.IndirizzoResa.NumeroCivico or "",
-                    Delivery.IndirizzoResa.CAP or "",
-                    Delivery.IndirizzoResa.Comune or "",
-                    Delivery.IndirizzoResa.Provincia or "",
-                    Delivery.IndirizzoResa.Nazione or "",
+                    "" if 'Indirizzo' not in Delivery.IndirizzoResa else Delivery.IndirizzoResa.Indirizzo,
+                    "" if 'NumeroCivico' not in Delivery.IndirizzoResa else Delivery.IndirizzoResa.NumeroCivico,
+                    "" if 'CAP' not in Delivery.IndirizzoResa else Delivery.IndirizzoResa.CAP,
+                    "" if 'Comune' not in Delivery.IndirizzoResa else Delivery.IndirizzoResa.Comune,
+                    "" if 'Provincia' not in Delivery.IndirizzoResa else Delivery.IndirizzoResa.Provincia,
+                    "" if 'Nazione' not in Delivery.IndirizzoResa else Delivery.IndirizzoResa.Nazione,
                 )
             invoice.write(delivery_dict)
 
     def set_summary_data(self, FatturaBody, invoice):
         invoice_id = invoice.id
-        Summary_datas = FatturaBody.DatiBeniServizi.DatiRiepilogo
+        Summary_datas = False if 'DatiRiepilogo' not in FatturaBody.DatiBeniServizi else FatturaBody.DatiBeniServizi.DatiRiepilogo
         summary_data_model = self.env["faturapa.summary.data"]
         if Summary_datas:
             for summary in Summary_datas:
                 summary_line = {
-                    "tax_rate": summary.AliquotaIVA or 0.0,
-                    "non_taxable_nature": summary.Natura or False,
-                    "incidental_charges": summary.SpeseAccessorie or 0.0,
-                    "rounding": summary.Arrotondamento or 0.0,
-                    "amount_untaxed": summary.ImponibileImporto or 0.0,
-                    "amount_tax": summary.Imposta or 0.0,
-                    "payability": summary.EsigibilitaIVA or False,
-                    "law_reference": summary.RiferimentoNormativo or "",
+                    "tax_rate": 0.0 if 'AliquotaIVA' not in summary else summary.AliquotaIVA,
+                    "non_taxable_nature": False if 'Natura' not in summary else summary.Natura,
+                    "incidental_charges": 0.0 if 'SpeseAccessorie' not in summary else summary.SpeseAccessorie,
+                    "rounding": 0.0 if 'Arrotondamento' not in summary else summary.Arrotondamento,
+                    "amount_untaxed": 0.0 if 'ImponibileImporto' not in summary else summary.ImponibileImporto,
+                    "amount_tax": 0.0 if 'Imposta' not in summary else summary.Imposta,
+                    "payability": False if 'EsigibilitaIVA' not in summary else summary.EsigibilitaIVA,
+                    "law_reference": "" if 'RiferimentoNormativo' not in summary else summary.RiferimentoNormativo,
                     "invoice_id": invoice_id,
                 }
                 summary_data_model.create(summary_line)
 
     def set_e_invoice_lines(self, FatturaBody, invoice_data):
         e_invoice_lines = self.env["einvoice.line"].browse()
-        for line in FatturaBody.DatiBeniServizi.DettaglioLinee:
-            e_invoice_lines |= self.create_e_invoice_line(line)
+        if 'DettaglioLinee' in FatturaBody.DatiBeniServizi:
+            for line in FatturaBody.DatiBeniServizi.DettaglioLinee:
+                e_invoice_lines |= self.create_e_invoice_line(line)
         if e_invoice_lines:
             invoice_data["e_invoice_line_ids"] = [(6, 0, e_invoice_lines.ids)]
 
@@ -1458,8 +1487,9 @@ class WizardImportFatturapa(models.TransientModel):
         )
 
     def check_invoice_amount(self, invoice, FatturaElettronicaBody):
-        dgd = FatturaElettronicaBody.DatiGenerali.DatiGeneraliDocumento
-        if dgd.ScontoMaggiorazione and dgd.ImportoTotaleDocumento:
+        dgd = False if 'DatiGeneraliDocumento' not in FatturaElettronicaBody.DatiGenerali else FatturaElettronicaBody.DatiGenerali.DatiGeneraliDocumento
+
+        if dgd and 'ScontoMaggiorazione' in dgd and dgd.ScontoMaggiorazione and 'ImportoTotaleDocumento' in dgd and dgd.ImportoTotaleDocumento:
             # assuming that, if someone uses
             # DatiGeneraliDocumento.ScontoMaggiorazione, also fills
             # DatiGeneraliDocumento.ImportoTotaleDocumento

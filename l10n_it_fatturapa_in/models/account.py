@@ -264,13 +264,14 @@ class AccountInvoice(models.Model):
     @api.model
     def compute_xml_amount_untaxed(self, FatturaBody):
         amount_untaxed = 0.0
-        for Riepilogo in FatturaBody.DatiBeniServizi.DatiRiepilogo:
-            amount_untaxed += float(Riepilogo.ImponibileImporto or 0.0)
+        if 'DatiRiepilogo' in FatturaBody.DatiBeniServizi:
+            for Riepilogo in FatturaBody.DatiBeniServizi.DatiRiepilogo:
+                amount_untaxed += 0.0 if 'ImponibileImporto' not in Riepilogo else float(Riepilogo.ImponibileImporto or 0.0)
         return amount_untaxed
 
     @api.model
     def compute_xml_amount_total(self, FatturaBody, amount_untaxed, amount_tax):
-        rounding = float(
+        rounding = 0.0 if 'Arrotondamento' not in FatturaBody.DatiGenerali.DatiGeneraliDocumento else float(
             FatturaBody.DatiGenerali.DatiGeneraliDocumento.Arrotondamento or 0.0
         )
         return amount_untaxed + amount_tax + rounding
@@ -279,18 +280,18 @@ class AccountInvoice(models.Model):
     def compute_xml_amount_tax(self, DatiRiepilogo):
         amount_tax = 0.0
         for Riepilogo in DatiRiepilogo:
-            amount_tax += float(Riepilogo.Imposta or 0.0)
+            amount_tax += 0.0 if 'Imposta' not in Riepilogo else float(Riepilogo.Imposta or 0.0)
         return amount_tax
 
     def set_einvoice_data(self, fattura):
         self.ensure_one()
         amount_untaxed = self.compute_xml_amount_untaxed(fattura)
-        amount_tax = self.compute_xml_amount_tax(fattura.DatiBeniServizi.DatiRiepilogo)
+        amount_tax = 0.0 if 'DatiRiepilogo' not in fattura.DatiBeniServizi else self.compute_xml_amount_tax(fattura.DatiBeniServizi.DatiRiepilogo)
         amount_total = self.compute_xml_amount_total(
             fattura, amount_untaxed, amount_tax
         )
-        reference = fattura.DatiGenerali.DatiGeneraliDocumento.Numero
-        date_invoice = fields.Date.from_string(
+        reference = False if 'Numero' not in fattura.DatiGenerali.DatiGeneraliDocumento else fattura.DatiGenerali.DatiGeneraliDocumento.Numero
+        date_invoice = False if 'Data' not in fattura.DatiGenerali.DatiGeneraliDocumento else fields.Date.from_string(
             fattura.DatiGenerali.DatiGeneraliDocumento.Data
         )
 

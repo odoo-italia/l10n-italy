@@ -207,7 +207,6 @@ def CreateFromDocument(xml_string):
             return '{}, D({})'.format(super(ObjectDict, self).__repr__(),
                                       self.__dict__)
 
-
     # TODO: crearlo una tantum?
     validator = xmlschema.XMLSchema(
         _xml_schema_1_2_1,
