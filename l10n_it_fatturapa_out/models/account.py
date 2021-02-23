@@ -19,7 +19,26 @@ class AccountInvoice(models.Model):
     )
 
     def preventive_checks(self):
-        # hook for preventive checks. Override and raise exception, in case
+        for invoice in self:
+            if invoice.invoice_payment_term_id.fatturapa_pt_id.code is False:
+                raise UserError(
+                    _(
+                        "Invoice %s fiscal payment term must be"
+                        " set for the selected payment term %s",
+                        invoice.name,
+                        invoice.invoice_payment_term_id.name,
+                    )
+                )
+
+            if invoice.invoice_payment_term_id.fatturapa_pm_id.code is False:
+                raise UserError(
+                    _(
+                        "Invoice %s fiscal payment method must be"
+                        " set for the selected payment term %s",
+                        invoice.name,
+                        invoice.invoice_payment_term_id.name,
+                    )
+                )
         return
 
     def action_invoice_cancel(self):
