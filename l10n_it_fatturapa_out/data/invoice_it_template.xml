@@ -639,11 +639,6 @@
                             t-esc="record.invoice_payment_term_id.fatturapa_pt_id.code"
                         />
                     </t>
-
-<!--                    <CondizioniPagamento>TP01</CondizioniPagamento>-->
-                    <!--                    <CondizioniPagamento-->
-                    <!--                        t-esc="record.invoice_payment_term_id.fatturapa_pt_id.code"-->
-                    <!--                    />-->
                     <t t-foreach="payments" t-as="move_line">
                         <DettaglioPagamento>
                             <t
