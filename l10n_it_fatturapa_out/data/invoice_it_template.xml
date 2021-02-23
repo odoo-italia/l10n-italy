@@ -269,7 +269,7 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                     <Email t-if="company_id.email" t-esc="company_id.email" />
                 </ContattiTrasmittente>
                 <PECDestinatario
-                    t-if="codice_destinatario == '0000000'"
+                    t-if="codice_destinatario == '0000000' and partner_id.pec_destinatario"
                     t-esc="partner_id.pec_destinatario"
                 />
             </DatiTrasmissione>
