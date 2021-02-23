@@ -9,6 +9,8 @@ import base64
 import logging
 import random
 import string
+from functools import partial
+from itertools import islice
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -83,6 +85,12 @@ class WizardExportFatturapa(models.TransientModel):
         return res
 
     def exportFatturaPA(self):
+        def getNewId():
+            out = id_generator()
+            while self.env["fatturapa.attachment.out"].file_name_exists(out):
+                out = id_generator()
+            return out
+
         invoices_by_partner = self.group_invoices_by_partner()
         attachments = self.env["fatturapa.attachment.out"]
         for partner_id in invoices_by_partner:
@@ -90,12 +98,6 @@ class WizardExportFatturapa(models.TransientModel):
             partner = self.getPartnerId(invoice_ids)
             context_partner = self.env.context.copy()
             context_partner.update({"lang": partner.lang})
-
-            progressivo_invio = id_generator()
-            while self.env["fatturapa.attachment.out"].file_name_exists(
-                progressivo_invio
-            ):
-                progressivo_invio = id_generator()
 
             invoice_ids = (
                 self.env["account.move"]
@@ -107,12 +109,70 @@ class WizardExportFatturapa(models.TransientModel):
                 if not inv.fatturapa_doc_attachments and self.report_print_menu:
                     self.generate_attach_report(inv)
 
-            fatturapa = EFatturaOut(self, partner, invoice_ids, progressivo_invio)
+            # https://more-itertools.readthedocs.io/en/stable/_modules/more_itertools/recipes.html#take # noqa: B950
+            def take(n, iterable):
+                """Return first *n* items of the iterable as a list.
 
-            attach = self.saveAttachment(fatturapa, progressivo_invio)
-            attachments |= attach
+                    >>> take(3, range(10))
+                    [0, 1, 2]
 
-            invoice_ids.write({"fatturapa_attachment_out_id": attach.id})
+                If there are fewer than *n* items in the iterable, all of them are
+                returned.
+
+                    >>> take(10, range(3))
+                    [0, 1, 2]
+
+                """
+                return list(islice(iterable, n))
+
+            # https://more-itertools.readthedocs.io/en/stable/_modules/more_itertools/more.html#chunked # noqa: B950
+            def chunked(iterable, n, strict=False):
+                """Break *iterable* into lists of length *n*:
+
+                    >>> list(chunked([1, 2, 3, 4, 5, 6], 3))
+                    [[1, 2, 3], [4, 5, 6]]
+
+                By the default, the last yielded list will have fewer than *n* elements
+                if the length of *iterable* is not divisible by *n*:
+
+                    >>> list(chunked([1, 2, 3, 4, 5, 6, 7, 8], 3))
+                    [[1, 2, 3], [4, 5, 6], [7, 8]]
+
+                To use a fill-in value instead, see the :func:`grouper` recipe.
+
+                If the length of *iterable* is not divisible by *n* and *strict* is
+                ``True``, then then ``ValueError`` will be raised before the last
+                list is yielded.
+
+                """
+                iterator = iter(partial(take, n, iter(iterable)), [])
+                if strict:
+
+                    def ret():
+                        for chunk in iterator:
+                            if len(chunk) != n:
+                                raise ValueError("iterable is not divisible by n.")
+                            yield chunk
+
+                    return iter(ret())
+                else:
+                    return iterator
+
+            # TODO: integrate Fichera's changes from 12.0 - #1859
+            # chunk_size = partner.max_invoice_in_xml or 1000
+            chunk_size = 1000
+            if not self.env.context.get("group_invoice", False):
+                chunk_size = 1
+
+            for invoice_chunk in chunked(invoice_ids, chunk_size):
+                progressivo_invio = getNewId()
+                fatturapa = EFatturaOut(self, partner, invoice_chunk, progressivo_invio)
+
+                attach = self.saveAttachment(fatturapa, progressivo_invio)
+                attachments |= attach
+
+                for invoice in invoice_chunk:
+                    invoice.write({"fatturapa_attachment_out_id": attach.id})
 
         action = {
             "name": "Export Electronic Invoice",
