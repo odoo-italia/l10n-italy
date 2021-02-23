@@ -130,6 +130,7 @@ class WizardExportFatturapa(models.TransientModel):
                 .browse(invoice_ids)
             )
 
+            self.checkPaymentTerms(invoice_ids)
             fatturapa = EFatturaOut(self, partner, invoice_ids, progressivo_invio)
 
             attach = self.saveAttachment(fatturapa, progressivo_invio)
@@ -150,6 +151,19 @@ class WizardExportFatturapa(models.TransientModel):
             action["domain"] = [("id", "in", attachments.ids)]
         return action
 
+    def checkPaymentTerms(self,invoices):
+        for invoice in invoices:
+            if invoice.invoice_payment_term_id.fatturapa_pt_id.code is False:
+                raise UserError(
+                    _("Invoice %s fiscal payment term must be set for the selected payment term %s",
+                    invoice.name, invoice.invoice_payment_term_id.name)
+                )
+
+            if invoice.invoice_payment_term_id.fatturapa_pm_id.code is False:
+                raise UserError(
+                    _("Invoice %s fiscal payment method must be set for the selected payment term %s",
+                    invoice.name, invoice.invoice_payment_term_id.name)
+                )
     def generate_attach_report(self, inv):
         binding_model_id = self.with_context(
             lang=None
