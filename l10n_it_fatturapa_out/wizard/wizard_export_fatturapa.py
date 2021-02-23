@@ -105,6 +105,9 @@ class WizardExportFatturapa(models.TransientModel):
                 .browse(invoice_ids)
             )
 
+            invoice_ids.preventive_checks()
+
+            # generate attachments (PDF version of invoice)
             for inv in invoice_ids:
                 if not inv.fatturapa_doc_attachments and self.report_print_menu:
                     self.generate_attach_report(inv)
