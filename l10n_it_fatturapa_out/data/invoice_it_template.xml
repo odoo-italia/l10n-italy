@@ -608,11 +608,11 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                 <!--                    <Data t-esc=""/>-->
                 <!--                    <TotalePercorso t-esc=""/>-->
                 <!--                </DatiVeicoli>-->
-                <DatiPagamento t-if="record.invoice_payment_term_id">
-                    <t
-                        t-set="payments"
-                        t-value="record.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))"
-                    />
+                <t
+                    t-set="payments"
+                    t-value="record.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))"
+                />
+                <DatiPagamento t-if="record.invoice_payment_term_id and payments">
                     <!--                    <CondizioniPagamento><t t-if="len(payments) == 1">TP02</t><t t-else="">TP01</t></CondizioniPagamento>-->
                     <CondizioniPagamento
                         t-esc="record.invoice_payment_term_id.fatturapa_pt_id.code"
