@@ -1113,7 +1113,7 @@ class WizardImportFatturapa(models.TransientModel):
                     {
                         "name": "" if 'NumeroDDT' not in DdtDataLine else DdtDataLine.NumeroDDT,
                         "date": False if 'DataDDT' not in DdtDataLine else DdtDataLine.DataDDT,
-                        "move_id": invoice_id,
+                        "invoice_id": invoice_id,
                     }
                 )
             else:
@@ -1131,7 +1131,7 @@ class WizardImportFatturapa(models.TransientModel):
                         {
                             "name": "" if 'NumeroDDT' not in DdtDataLine else DdtDataLine.NumeroDDT,
                             "date": False if 'DataDDT' not in DdtDataLine else DdtDataLine.DataDDT,
-                            "move_id": invoice_id,
+                            "invoice_id": invoice_id,
                             "invoice_line_id": invoice_lineid,
                         }
                     )

@@ -58,7 +58,7 @@ class AccountInvoice(models.Model):
     def goto_invoice(self, **kwargs):
         self.ensure_one()
 
-        if self.type.startswith("out_"):
+        if self.move_type.startswith("out_"):
             view_id = self.env.ref("account.view_move_form").id
 
         else:

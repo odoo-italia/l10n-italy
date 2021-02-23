@@ -123,7 +123,7 @@ class FatturaPAAttachmentIn(models.Model):
     def extract_attachments(self, AttachmentsData, invoice_id):
         AttachModel = self.env["fatturapa.attachments"]
         for attach in AttachmentsData:
-            if not attach.NomeAttachment:
+            if 'NomeAttachment' not in attach or not attach.NomeAttachment:
                 name = _("Attachment without name")
             else:
                 name = attach.NomeAttachment
