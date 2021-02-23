@@ -21,7 +21,14 @@
                 <footer>
                     <button
                         name="exportFatturaPA"
-                        string="Export"
+                        string="Export Grouped"
+                        type="object"
+                        class="oe_highlight"
+                        context="{'group_invoice': True}"
+                    />
+                    <button
+                        name="exportFatturaPA"
+                        string="Export Single"
                         type="object"
                         class="oe_highlight"
                     />
