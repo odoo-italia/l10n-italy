@@ -153,13 +153,13 @@ class WizardExportFatturapa(models.TransientModel):
 
     def checkPaymentTerms(self,invoices):
         for invoice in invoices:
-            if invoice.invoice_payment_term_id.fatturapa_pt_id.code is False:
+            if invoice.invoice_payment_term_id.id and invoice.invoice_payment_term_id.fatturapa_pt_id.code is False:
                 raise UserError(
                     _("Invoice %s fiscal payment term must be set for the selected payment term %s",
                     invoice.name, invoice.invoice_payment_term_id.name)
                 )
 
-            if invoice.invoice_payment_term_id.fatturapa_pm_id.code is False:
+            if invoice.invoice_payment_term_id.id and invoice.invoice_payment_term_id.fatturapa_pm_id.code is False:
                 raise UserError(
                     _("Invoice %s fiscal payment method must be set for the selected payment term %s",
                     invoice.name, invoice.invoice_payment_term_id.name)
