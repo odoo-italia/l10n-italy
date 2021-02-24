@@ -14,6 +14,11 @@ exclude: |
   ^docs/_templates/.*\.html$|
   # You don't usually want a bot to modify your legal texts
   (LICENSE.*|COPYING.*)|
+  # Generated files
+  (l10n_it_fatturapa/bindings)|
+  # Original stylesheets
+  (l10n_it_fatturapa/data/fatturaordinaria_v1.2.1.xsl)|
+  (l10n_it_fatturapa/data/FoglioStileAssoSoftware_v1.1.xsl)
   # XML tests should not be reformatted
   ^l10n_it_fatturapa_out/tests/data
 default_language_version:
