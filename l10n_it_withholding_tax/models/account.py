@@ -51,8 +51,8 @@ class AccountPartialReconcile(models.Model):
             ml_ids.append(vals.get("credit_move_id"))
         move_lines = self.env["account.move.line"].browse(ml_ids)
         for ml in move_lines:
-            domain = [("move_id", "=", ml.move_id.id)]
-            invoice = self.env["account.move"].search(domain)
+            #domain = [("move_id", "=", ml.move_id.id)]
+            invoice = self.env["account.move"].browse(ml.move_id.id)
             if invoice:
                 break
         # Limit value of reconciliation
@@ -185,9 +185,10 @@ class AccountAbstractPayment(models.Model):
         Compute amount to pay proportionally to amount total - wt
         """
         rec = super(AccountAbstractPayment, self).default_get(fields)
-        invoice_defaults = self.resolve_2many_commands(
-            "invoice_ids", rec.get("invoice_ids")
-        )
+        invoice_defaults = rec.get("invoice_ids")
+        # self.resolve_2many_commands(
+        #     "invoice_ids", rec.get("invoice_ids")
+        # )
         if invoice_defaults and len(invoice_defaults) == 1:
             invoice = invoice_defaults[0]
             if (
