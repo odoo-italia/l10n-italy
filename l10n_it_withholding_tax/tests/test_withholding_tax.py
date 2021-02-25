@@ -101,25 +101,12 @@ class TestWithholdingTax(TransactionCase):
                 .search([("type", "=", "purchase")])[0]
                 .id,
                 "partner_id": self.env.ref("base.res_partner_12").id,
-                "account_id": self.env["account.account"]
-                .search(
-                    [
-                        (
-                            "user_type_id",
-                            "=",
-                            self.env.ref("account.data_account_type_receivable").id,
-                        )
-                    ],
-                    limit=1,
-                    order="id",
-                )
-                .id,
                 "invoice_line_ids": invoice_line_vals,
-                "type": "in_invoice",
+                "move_type": "in_invoice",
             }
         )
         self.invoice._onchange_invoice_line_wt_ids()
-        self.invoice.action_invoice_open()
+        self.invoice._post()
 
     def test_withholding_tax(self):
         domain = [("name", "=", "Code 1040")]
@@ -155,7 +142,7 @@ class TestWithholdingTax(TransactionCase):
             .with_context(ctx)
             .create(
                 {
-                    "payment_date": time.strftime("%Y") + "-07-15",
+                    "date": time.strftime("%Y") + "-07-15",
                     "amount": 800,
                     "journal_id": self.journal_bank.id,
                     "payment_method_id": self.env.ref(
@@ -194,14 +181,14 @@ class TestWithholdingTax(TransactionCase):
             "active_model": "account.move",
             "active_ids": [self.invoice.id],
             "active_id": self.invoice.id,
-            "default_invoice_ids": [(4, self.invoice.id, None)],
+            "default_reconciled_invoice_ids": [(4, self.invoice.id, None)],
         }
         register_payments = (
             self.env["account.payment"]
             .with_context(ctx)
             .create(
                 {
-                    "payment_date": time.strftime("%Y") + "-07-15",
+                    "date": time.strftime("%Y") + "-07-15",
                     "amount": 600,
                     "journal_id": self.journal_bank.id,
                     "payment_method_id": self.env.ref(
@@ -210,11 +197,12 @@ class TestWithholdingTax(TransactionCase):
                 }
             )
         )
-        register_payments.action_validate_invoice_payment()
+        register_payments.action_post()
 
         # WT amount in payment move lines
+        payment_line_ids = self.invoice.line_ids.filtered(lambda l: l.account_id.internal_type in ['receivable', 'payable'])
         self.assertTrue(
-            set(self.invoice.payment_move_line_ids.mapped("debit")) == {600, 150}
+            set(payment_line_ids.mapped("debit")) == {600, 150}
         )
 
         # WT aomunt applied in statement
