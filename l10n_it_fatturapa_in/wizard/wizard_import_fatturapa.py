@@ -1419,7 +1419,6 @@ class WizardImportFatturapa(models.TransientModel):
         if self.e_invoice_detail_level == "0":
             return
 
-        pay_acc_id = partner.property_account_payable_id.id
         invoice_lines = []
         invoice_line_model = self.env["account.move.line"]
         if self.e_invoice_detail_level == "1":
