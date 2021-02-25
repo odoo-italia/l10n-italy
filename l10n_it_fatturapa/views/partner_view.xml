@@ -60,6 +60,10 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="electronic_invoice_obliged_subject" invisible="True"/>
+                <field name="electronic_invoice_subjected" invisible="True"/>
+            </field>
             <xpath expr="//div[@name='div_address']/../../.." position="after">
                 <group
                     string="E-invoicing"
