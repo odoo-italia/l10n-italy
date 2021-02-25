@@ -1,8 +1,7 @@
 # generated from manifests external_dependencies
 asn1crypto
 codicefiscale
-asn1crypto
-PyXB >= 1.2.6
 elementpath
+PyXB >= 1.2.6
 unidecode
 xmlschema
