@@ -6,7 +6,7 @@
 
 {
     "name": "ITA - Fattura elettronica - Base",
-    "version": "14.0.2.0.2",
+    "version": "14.0.2.0.3",
     "category": "Localization/Italy",
     "summary": "Fatture elettroniche",
     "author": "Davide Corio, Agile Business Group, Innoviu, "
@@ -24,7 +24,6 @@
         "l10n_it_account_tax_kind",
         "l10n_it_vat_payability",
         "l10n_it_fiscal_payment_term",
-        "l10n_it_split_payment",
         "l10n_it_fiscal_document_type",
         "partner_firstname",
     ],
