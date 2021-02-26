@@ -29,11 +29,9 @@ _logger.setLevel(logging.DEBUG)
 # le locations aggiuntive.
 
 _XSD_SCHEMA = "Schema_del_file_xml_FatturaPA_versione_1.2.1.xsd"
-_xml_schema_1_2_1 = get_module_resource(
-    "l10n_it_fatturapa", "bindings", "xsd", _XSD_SCHEMA
-)
+_xml_schema_1_2_1 = get_module_resource("l10n_it_fatturapa", "data", "xsd", _XSD_SCHEMA)
 _old_xsd_specs = get_module_resource(
-    "l10n_it_fatturapa", "bindings", "xsd", "xmldsig-core-schema.xsd"
+    "l10n_it_fatturapa", "data", "xsd", "xmldsig-core-schema.xsd"
 )
 
 _logger = logging.getLogger(__name__)
