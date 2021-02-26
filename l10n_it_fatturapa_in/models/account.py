@@ -179,8 +179,8 @@ class AccountInvoice(models.Model):
         self.e_invoice_validation_message = False
 
         bills_to_check = self.filtered(
-            lambda inv: inv.move_type in ["in_invoice", "in_refund"]
-            and inv.state in ["draft", "open", "paid"]
+            lambda inv: inv.is_purchase_document()
+            and inv.state in ["draft", "posted"]
             and inv.fatturapa_attachment_in_id
         )
         for bill in bills_to_check:
@@ -242,7 +242,7 @@ class AccountInvoice(models.Model):
         res = []
         for tup in result:
             invoice = self.browse(tup[0])
-            if invoice.move_type in ("in_invoice", "in_refund"):
+            if invoice.is_purchase_document():
                 name = "{}, {}".format(tup[1], invoice.partner_id.name)
                 if invoice.amount_total_signed:
                     name += ", {} {}".format(
