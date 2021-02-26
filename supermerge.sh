@@ -7,11 +7,11 @@
 # requirements.txt. Una volta risolti i conflitti potete rilanciare lo script.
 
 # clone iniziale
-if [ ! -x l10n-italy ]; then
+if [ ! -x l10n-italy -a ! -x .git ]; then
 	git clone --single-branch --branch 14.0 https://github.com/OCA/l10n-italy 
 	(cd l10n-italy; git checkout -b 14.0-supermerge)
 fi
-cd l10n-italy
+[ -x l10n-italy ] && cd l10n-italy
 
 set -xe
 git pull --no-ff --no-edit --quiet https://github.com/odoo-italia/l10n-italy 14.0-premerge
