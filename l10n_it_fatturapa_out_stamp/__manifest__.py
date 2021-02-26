@@ -1,7 +1,7 @@
 # Copyright 2018 Lorenzo Battistini
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 {
-    "name": "Italian Localization - Fattura elettronica - Integrazione bollo",
+    "name": "ITA - Fattura elettronica - Integrazione bollo",
     "summary": "Modulo ponte tra emissione fatture elettroniche e imposta di bollo",
     "version": "14.0.1.0.0",
     "development_status": "Beta",
