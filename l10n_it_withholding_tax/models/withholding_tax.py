@@ -16,6 +16,13 @@ class WithholdingTax(models.Model):
     )
     def _compute_get_rate(self):
         for wt in self:
+            id = wt.id
+            if not isinstance(id,int):
+                try:
+                    id = id.origin
+                except Exception as inst:
+                    print('type id witholding tax not found')
+
             self.env.cr.execute(
                 """
                 SELECT tax, base FROM withholding_tax_rate
@@ -23,7 +30,7 @@ class WithholdingTax(models.Model):
                      and (date_start <= current_date or date_start is null)
                      and (date_stop >= current_date or date_stop is null)
                     ORDER by date_start LIMIT 1""",
-                (wt.id,),
+                (id,),
             )
             rate = self.env.cr.fetchone()
             if rate:

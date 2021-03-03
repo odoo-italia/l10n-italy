@@ -25,6 +25,8 @@ class AccountFullReconcile(models.Model):
                 wt_move.action_paid()
         return res
 
+
+
     def unlink(self):
         for rec in self:
             wt_moves = rec._get_wt_moves()
@@ -324,6 +326,7 @@ class AccountMove(models.Model):
             # invoice.amount_net_pay_residual = amount_net_pay_residual
 
     withholding_tax = fields.Boolean("Withholding Tax")
+
     withholding_tax_line_ids = fields.One2many(
         "account.invoice.withholding.tax",
         "invoice_id",
@@ -332,6 +335,7 @@ class AccountMove(models.Model):
         readonly=True,
         states={"draft": [("readonly", False)]},
     )
+
     withholding_tax_amount = fields.Float(
         compute="_compute_amount_withholding_tax",
         digits="Account",
@@ -364,19 +368,28 @@ class AccountMove(models.Model):
             any(line.invoice_line_tax_wt_ids for line in invoice.invoice_line_ids)
             and not invoice.withholding_tax_line_ids
         ):
-            invoice.compute_taxes()
+            invoice._save_wt()
 
         return invoice
+
 
     @api.onchange("invoice_line_ids")
     def _onchange_invoice_line_wt_ids(self):
         self.ensure_one()
+        self._save_wt()
+
+    def _save_wt(self):
+        self.ensure_one()
         wt_taxes_grouped = self.get_wt_taxes_values()
-        wt_tax_lines = [(5, 0, 0)]
+        # wt_tax_lines = [(5, 0, 0)]
+
+        withholding_tax_line_ids = self.env['account.invoice.withholding.tax']
         for tax in wt_taxes_grouped.values():
-            wt_tax_lines.append((0, 0, tax))
-        self.withholding_tax_line_ids = wt_tax_lines
-        if len(wt_tax_lines) > 1:
+            withholding_tax_line_ids |= self.env['account.invoice.withholding.tax'].create(tax)
+
+        self.withholding_tax_line_ids = withholding_tax_line_ids
+
+        if len(self.withholding_tax_line_ids) > 1:
             self.withholding_tax = True
         else:
             self.withholding_tax = False
@@ -425,8 +438,14 @@ class AccountMove(models.Model):
                 taxes = []
                 for wt_tax in line.invoice_line_tax_wt_ids:
                     res = wt_tax.compute_tax(line.price_subtotal)
+                    id = wt_tax.id
+                    if not isinstance(id, int):
+                        try:
+                            id = id.origin
+                        except Exception as inst:
+                            print('type id witholding tax not found')
                     tax = {
-                        "id": wt_tax.id,
+                        "id": id,
                         "sequence": wt_tax.sequence,
                         "base": res["base"],
                         "tax": res["tax"],
@@ -434,13 +453,21 @@ class AccountMove(models.Model):
                     taxes.append(tax)
 
                 for tax in taxes:
+                    invoice_id = invoice.id
+                    if not isinstance(invoice_id, int):
+                        try:
+                            invoice_id = invoice_id.origin
+                        except Exception as inst:
+                            print('invoice_id new id error')
                     val = {
-                        "invoice_id": invoice.id,
+                        "invoice_id": invoice_id,
                         "withholding_tax_id": tax["id"],
                         "tax": tax["tax"],
                         "base": tax["base"],
                         "sequence": tax["sequence"],
                     }
+
+
 
                     key = (
                         self.env["withholding.tax"]
@@ -492,6 +519,7 @@ class AccountMove(models.Model):
                 else:
                     payment_val["wt_move_line"] = False
         return payment_vals
+
 
 
 class AccountMoveLine(models.Model):
@@ -551,7 +579,6 @@ class AccountMoveLine(models.Model):
         string="W.T.",
         default=_default_withholding_tax,
     )
-
 
 class AccountInvoiceWithholdingTax(models.Model):
     """
