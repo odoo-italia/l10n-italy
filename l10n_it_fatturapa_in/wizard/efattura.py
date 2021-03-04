@@ -6,6 +6,8 @@ import xmlschema
 from lxml import etree
 
 from odoo.modules.module import get_module_resource
+from odoo.addons.l10n_it_fatturapa.bindings import fatturapa
+from io import StringIO, BytesIO
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -65,6 +67,11 @@ _root = _schema_parse()
 
 date_types = {}
 datetime_types = {}
+two_decimal_types = {}
+eight_decimal_types = {}
+rate_decimal_types = {}
+weigth_decimal_types = {}
+quantity_decimal_types = {}
 
 
 def get_parent_element(e):
@@ -118,6 +125,14 @@ def collect_types():
     # complexType containing xs:dateTime children
     collect_elements_by_type_query(datetime_types, "//*[@type='xs:dateTime']")
 
+    # complexType containing xs:dateTime children
+    collect_elements_by_type_query(two_decimal_types, "//*[@type='Amount2DecimalType']")
+    collect_elements_by_type_query(eight_decimal_types, "//*[@type='Amount8DecimalType']")
+    collect_elements_by_type_query(weigth_decimal_types, "//*[@type='PesoType']")
+    collect_elements_by_type_query(rate_decimal_types, "//*[@type='RateType']")
+    collect_elements_by_type_query(quantity_decimal_types, "//*[@type='QuantitaType']")
+
+
 
 def parse_datetime(s):
     m = re.match(r"(.*?)(\+|-)(\d+):(\d+)", s)
@@ -125,6 +140,44 @@ def parse_datetime(s):
         s = "".join(m.group(1, 2, 3, 4))
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f%z")
 
+def _validateDecimal(path, _mandatory,root,tree,problems,number_of_decimals=2):
+    for element in root.xpath(path):
+        result = element.text.strip()
+        if result:
+            try:
+                format_number = '{0:.'+str(number_of_decimals)+'f}'
+                element.text = format_number.format(float(result))
+            except ValueError:
+                msg = (
+                        "element is not a float "
+                        "%s: %s" % (tree.getpath(element), element.text)
+                    )
+                problems.append(msg)
+
+def _formatAllDecimals(root,tree,problems):
+    # remove timezone from type `xs:decimal_types` if any or
+    # pyxb will fail to compare with
+    for path, _mandatory in two_decimal_types.items():
+        _validateDecimal(path, _mandatory, root, tree, problems)
+    # remove timezone from type `xs:decimal_types` if any or
+    # pyxb will fail to compare with
+    for path, _mandatory in eight_decimal_types.items():
+        _validateDecimal(path, _mandatory, root, tree, problems, 8)
+
+    # remove timezone from type `xs:decimal_types` if any or
+    # pyxb will fail to compare with
+    for path, _mandatory in weigth_decimal_types.items():
+        _validateDecimal(path, _mandatory, root, tree, problems)
+
+    # remove timezone from type `xs:decimal_types` if any or
+    # pyxb will fail to compare with
+    for path, _mandatory in rate_decimal_types.items():
+        _validateDecimal(path, _mandatory, root, tree, problems)
+
+    # remove timezone from type `xs:decimal_types` if any or
+    # pyxb will fail to compare with
+    for path, _mandatory in quantity_decimal_types.items():
+        _validateDecimal(path, _mandatory, root, tree, problems, 8)
 
 def _fix_xmlstring(xml_string):
     """Possono arrivare dallo SdI URL con entity/caratteri aggiuntivi,
@@ -162,6 +215,7 @@ def _fix_xmlstring(xml_string):
     # https://github.com/sissaschool/xmlschema/issues/213
     xml_string = re.sub(r">\s*0.0000000+\s*<", ">0.00<", xml_string)
     return xml_string.encode()
+
 
 
 def CreateFromDocument(xml_string):
@@ -212,12 +266,20 @@ def CreateFromDocument(xml_string):
         _xml_schema_1_2_1,
         locations={"http://www.w3.org/2000/09/xmldsig#": _old_xsd_specs},
     )
-
-    xml_string = _fix_xmlstring(xml_string)
-    root = etree.fromstring(xml_string)
-
     problems = []
-    tree = etree.ElementTree(root)
+    xml_string = _fix_xmlstring(xml_string)
+    try:
+        root = etree.fromstring(xml_string)
+        tree = etree.ElementTree(root)
+    except Exception as e:
+        elem= fatturapa.CreateFromDocument(xml_string)
+        xml_string = elem.toxml('utf-8')
+        xml_string = _fix_xmlstring(xml_string)
+        root = etree.fromstring(xml_string)
+        tree = etree.ElementTree(root)
+        _formatAllDecimals(root,tree,problems)
+
+
 
     # remove timezone from type `xs:date` if any or
     # pyxb will fail to compare with
@@ -231,6 +293,8 @@ def CreateFromDocument(xml_string):
                 )
                 problems.append(msg)
             element.text = result[:10]
+
+
 
     # remove bogus dates accepted by ADE but not by python
     for path, mandatory in datetime_types.items():
@@ -263,6 +327,7 @@ def CreateFromDocument(xml_string):
     validat = validator.to_dict(tree, dict_class=ObjectDict)
     validat._xmldoctor = problems
     return validat
+
 
 
 collect_types()
