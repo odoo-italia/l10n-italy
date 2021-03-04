@@ -348,7 +348,7 @@ class WizardImportFatturapa(models.TransientModel):
     def _prepare_generic_line_data(self, line):
         retLine = {}
         natura = None if 'Natura' not in line else line.Natura
-        aliquota = 0.0 if 'AliquotaIVA' not in line else line.AliquotaIVA
+        aliquota = None if 'AliquotaIVA' not in line else line.AliquotaIVA
         account_taxes = self.get_account_taxes(aliquota,natura)
         if account_taxes:
             retLine["tax_ids"] = [(6, 0, [account_taxes[0].id])]
@@ -1042,12 +1042,13 @@ class WizardImportFatturapa(models.TransientModel):
                 invoice.id, FatturaBody.DatiGenerali.DatiGeneraliDocumento
             )
 
-        self.set_roundings(FatturaBody, invoice)
 
         # compute the invoice
         invoice._move_autocomplete_invoice_lines_values()
 
         self.set_vendor_bill_data(FatturaBody, invoice)
+
+
 
         # this can happen with refunds with negative amounts
         invoice.process_negative_lines()
@@ -1140,7 +1141,7 @@ class WizardImportFatturapa(models.TransientModel):
         if 'Art73' in FatturaBody.DatiGenerali.DatiGeneraliDocumento:
             invoice_data["art73"] = True
 
-    def set_roundings(self, FatturaBody, invoice):
+    def set_roundings(self,FatturaBody, invoice,invoice_lines, invoice_line_model):
         rounding = 0.0
         if 'DatiRiepilogo' in FatturaBody.DatiBeniServizi:
             for summary in FatturaBody.DatiBeniServizi.DatiRiepilogo:
@@ -1148,6 +1149,7 @@ class WizardImportFatturapa(models.TransientModel):
         if 'DatiGeneraliDocumento' in FatturaBody.DatiGenerali:
             summary = FatturaBody.DatiGenerali.DatiGeneraliDocumento
             rounding += 0.0 if 'Arrotondamento' not in summary else float(summary.Arrotondamento or 0.0)
+
 
         if rounding:
             arrotondamenti_attivi_account_id = (
@@ -1176,14 +1178,21 @@ class WizardImportFatturapa(models.TransientModel):
                 # XXX fallisce cattivo se non trova l'imposta Arrotondamento
                 to_round = 0.0 if 'Arrotondamento' not in summary else float(summary.Arrotondamento or 0.0)
                 if to_round != 0.0:
+                    aliquotaIva =  None if 'AliquotaIVA' not in summary else summary.AliquotaIVA
+                    natura = False if 'Natura' not in summary else summary.Natura
                     account_taxes = self.get_account_taxes(
-                        summary.AliquotaIVA, summary.Natura
+                        aliquotaIva,natura
                     )
-                    arrotondamenti_account_id = (
-                        arrotondamenti_passivi_account_id.id
-                        if to_round < 0.0
-                        else arrotondamenti_attivi_account_id.id
-                    )
+                    credit = 0.0
+                    debit = 0.0
+
+                    if to_round > 0.0:
+                        arrotondamenti_account_id = arrotondamenti_passivi_account_id.id
+                        debit = to_round
+                    else:
+                        arrotondamenti_account_id = arrotondamenti_attivi_account_id.id
+                        credit = - to_round
+
                     invoice_line_tax_id = (
                         account_taxes[0].id
                         if account_taxes
@@ -1197,14 +1206,20 @@ class WizardImportFatturapa(models.TransientModel):
                             "move_id": invoice.id,
                             "name": name,
                             "account_id": arrotondamenti_account_id,
-                            "price_unit": abs(to_round),
-                            "tax_ids": [(6, 0, [invoice_line_tax_id])],
+                            "price_unit": to_round,
+                            "tax_ids": [(6, 0, [invoice_line_tax_id])]
                         }
                     )
             if line_vals:
-                self.env["account.move.line"].with_context(
-                    check_move_validity=False
-                ).create(line_vals)
+                self._set_invoice_lines(
+                    False, line_vals, invoice_lines, invoice_line_model
+                )
+
+                # line = self.env["account.move.line"].with_context(
+                #     check_move_validity=False
+                # ).create(line_vals)
+                # invoice.line_ids |=line
+
 
     def set_efatt_rounding(self, FatturaBody, invoice_data):
         if 'Arrotondamento' in FatturaBody.DatiGenerali.DatiGeneraliDocumento:
@@ -1231,7 +1246,7 @@ class WizardImportFatturapa(models.TransientModel):
             details = PaymentLine.DettaglioPagamento
             if details:
                 for dline in details:
-                    if dline.DataScadenzaPagamento:
+                    if 'DataScadenzaPagamento' in dline and dline.DataScadenzaPagamento:
                         dates.append(fields.Date.to_date(dline.DataScadenzaPagamento))
         dates.sort(reverse=True)
         return dates
@@ -1481,6 +1496,9 @@ class WizardImportFatturapa(models.TransientModel):
                 self._set_invoice_lines(
                     product, invoice_line_data, invoice_lines, invoice_line_model
                 )
+
+
+        self.set_roundings(FatturaBody, invoice,invoice_lines, invoice_line_model)
 
         invoice.with_context(check_move_validity=False).update(
             {"invoice_line_ids": [(6, 0, invoice_lines)]}

@@ -131,9 +131,9 @@ class FatturaPAAttachmentIn(models.Model):
             _attach_dict = {
                 "name": name,
                 "datas": base64.b64encode(content),
-                "description": attach.DescrizioneAttachment or "",
-                "compression": attach.AlgoritmoCompressione or "",
-                "format": attach.FormatoAttachment or "",
+                "description": "" if 'DescrizioneAttachment' not in attach else attach.DescrizioneAttachment,
+                "compression": "" if 'AlgoritmoCompressione' not in attach else attach.AlgoritmoCompressione,
+                "format":  "" if 'FormatoAttachment' not in attach else attach.FormatoAttachment,
                 "invoice_id": invoice_id,
             }
             AttachModel.create(_attach_dict)
