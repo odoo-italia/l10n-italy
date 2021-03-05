@@ -16,7 +16,7 @@ class SdiChannel(models.Model):
     _name = "sdi.channel"
     _description = "ES channel"
 
-    name = fields.Char(string="Name", required=True, default=_("PEC"))
+    name = fields.Char(string="Name", required=True, default="PEC")
     company_id = fields.Many2one(
         "res.company",
         string="Company",
@@ -34,9 +34,7 @@ class SdiChannel(models.Model):
         default="pec",
     )
 
-
-class SdiChannelPEC(models.Model):
-    _inherit = "sdi.channel"
+    # SdiChannelPEC
 
     pec_server_id = fields.Many2one(
         "ir.mail_server",
@@ -122,9 +120,7 @@ class SdiChannelPEC(models.Model):
                 skip_check_email_validity=True
             ).email_exchange_system = False
 
-
-class SdiChannelWEB(models.Model):
-    _inherit = "sdi.channel"
+    # SdiChannelWEB
 
     web_server_address = fields.Char(string="Web server address")
     web_server_login = fields.Char(string="Web server login")
