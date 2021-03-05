@@ -15,15 +15,14 @@
         </form>
     </field>
     </record>
-
-    <record
-        id="action_fatturapa_out_export"
-        name="Download ZIP e-invoice XML"
-        res_model="wizard.fatturapa.export"
-        binding_model="fatturapa.attachment.out"
-        view_mode="form"
-        target="new"
-        binding_views="list,form"
-    />
-
+    <record id="action_fatturapa_out_export" model="ir.actions.act_window">
+        <field name="name">Download ZIP e-invoice XML</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">wizard.fatturapa.export</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_fatturapa_attachment_out"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="view_id" ref="view_sdi_channel_tree" />
+    </record>
 </odoo>
