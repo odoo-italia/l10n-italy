@@ -17,6 +17,7 @@
     "data": [
         "data/invoice_it_template.xml",
         "wizard/wizard_export_fatturapa_view.xml",
+        "security/ir.model.access.csv",
     ],
     "installable": True,
 }
