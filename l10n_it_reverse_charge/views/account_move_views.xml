@@ -9,7 +9,7 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form" />
         <field name="arch" type="xml">
-            <group string="Accounting">
+            <group name="accounting_info_group">
                 <field
                     name="rc_self_invoice_id"
                     readonly="True"
@@ -35,11 +35,7 @@
         <field name="arch" type="xml">
             <group string="Taxes">
                 <field name="rc" />
-<<<<<<< HEAD:l10n_it_reverse_charge/views/account_move_views.xml
-            </xpath>
-=======
             </group>
->>>>>>> 32b24d2c50857db9ddb21d6767fa7db84eaec353:l10n_it_reverse_charge/views/account_invoice_view.xml
         </field>
     </record>
 </odoo>
