@@ -536,11 +536,6 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         <!--                            <Importo t-esc=""/>-->
                         <!--                        </ScontoMaggiorazione>-->
                         <ImportoTotaleDocumento
-                            t-if="record.split_payment"
-                            t-esc="format_numbers_two(record.amount_total + record.amount_sp)"
-                        />
-                        <ImportoTotaleDocumento
-                            t-if="not record.split_payment"
                             t-esc="format_numbers_two(record.amount_total)"
                         />
                         <!--                        <Arrotondamento t-esc=""/>-->
