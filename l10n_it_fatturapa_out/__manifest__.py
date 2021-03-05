@@ -21,9 +21,9 @@
     ],
     "data": [
         "data/invoice_it_template.xml",
-        # "wizard/wizard_export_fatturapa_view.xml",
-        # "views/attachment_view.xml",
-        # "views/account_view.xml",
+        "wizard/wizard_export_fatturapa_view.xml",
+        "views/attachment_view.xml",
+        "views/account_view.xml",
         "security/ir.model.access.csv",
         "data/l10n_it_fatturapa_out_data.xml",
         "security/rules.xml",
