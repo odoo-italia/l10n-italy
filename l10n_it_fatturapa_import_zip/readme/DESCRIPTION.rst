@@ -1,6 +1,6 @@
 **Italiano**
 
-Questo modulo aggiunge una procedura per importare  file XML di fatture elettroniche partendo da uno zip file.
+Questo modulo aggiunge una procedura per importare file XML di fatture elettroniche partendo da uno zip file.
 
 **English**
 
