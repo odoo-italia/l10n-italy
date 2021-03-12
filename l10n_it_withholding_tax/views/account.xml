@@ -18,7 +18,7 @@
                 >
                     <attribute
                         name="context"
-                    >{'fiscal_position_id': fiscal_position_id, 'move_type': move_type, 'journal_id': journal_id, 'default_invoice_id': id}</attribute>
+                    >{'fiscal_position_id': fiscal_position_id, 'default_move_type': context.get('default_move_type'), 'journal_id': journal_id, 'default_partner_id': commercial_partner_id, 'default_currency_id': currency_id or company_currency_id}</attribute>
                 </xpath>
 
                 <xpath
@@ -33,11 +33,11 @@
                 </xpath>
 
 <!--
-                <xpath expr="//page//tree//field[@name='tax_ids']" position="after">
+                <xpath expr="//field[@name='narration']" position="before">
                     <field
-                    name="withholding_tax_line_ids"
-                    attrs="{'invisible': [('withholding_tax', '=', False)]}"
-                >
+                        name="withholding_tax_line_ids"
+                        attrs="{'invisible': [('withholding_tax', '=', False)]}"
+                    >
                         <tree>
                             <field name="withholding_tax_id" />
                             <field name="base" />

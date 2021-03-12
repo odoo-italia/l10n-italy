@@ -50,11 +50,8 @@ class AccountPartialReconcile(models.Model):
         if vals.get("credit_move_id"):
             ml_ids.append(vals.get("credit_move_id"))
         move_lines = self.env["account.move.line"].browse(ml_ids)
-        for ml in move_lines:
-            domain = [("move_id", "=", ml.move_id.id)]
-            invoice = self.env["account.move"].search(domain)
-            if invoice:
-                break
+        invoice = move_lines.filtered(lambda x: x.exists()).move_id
+        # invoice.ensure_one() XXX - should we do this?
         # Limit value of reconciliation
         if invoice and invoice.withholding_tax and invoice.amount_net_pay:
             # We must consider amount in foreign currency, if present
@@ -185,9 +182,7 @@ class AccountAbstractPayment(models.Model):
         Compute amount to pay proportionally to amount total - wt
         """
         rec = super(AccountAbstractPayment, self).default_get(fields)
-        invoice_defaults = self.resolve_2many_commands(
-            "invoice_ids", rec.get("invoice_ids")
-        )
+        invoice_defaults = self.new({"invoice_ids": rec.get("invoice_ids")}).invoice_ids
         if invoice_defaults and len(invoice_defaults) == 1:
             invoice = invoice_defaults[0]
             if (
@@ -316,11 +311,10 @@ class AccountMove(models.Model):
             invoice.amount_net_pay = invoice.amount_total - withholding_tax_amount
             # amount_net_pay_residual = invoice.amount_net_pay
             invoice.withholding_tax_amount = withholding_tax_amount
-            # XXX da vedere
-            # for line in invoice.payment_move_line_ids:
-            #    if not line.withholding_tax_generated_by_move_id:
-            #        amount_net_pay_residual -= line.debit or line.credit
-            # invoice.amount_net_pay_residual = amount_net_pay_residual
+            for line in invoice.line_ids._reconciled_lines():
+                if not line.withholding_tax_generated_by_move_id:
+                    amount_net_pay_residual -= line.debit or line.credit
+            invoice.amount_net_pay_residual = amount_net_pay_residual
 
     withholding_tax = fields.Boolean("Withholding Tax")
     withholding_tax_line_ids = fields.One2many(
