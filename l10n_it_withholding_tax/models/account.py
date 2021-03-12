@@ -532,6 +532,8 @@ class AccountMoveLine(models.Model):
         "account.move", string="Withholding Tax generated from", readonly=True
     )
 
+    invoice_id = fields.Many2one('account.move', related="move_id")
+
     def remove_move_reconcile(self):
         # When unreconcile a payment with a wt move linked, it will be
         # unreconciled also the wt account move
