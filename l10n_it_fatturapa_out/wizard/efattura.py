@@ -126,7 +126,10 @@ class EFatturaOut:
             if uom_precision < 2:
                 uom_precision = 2
 
-            quantity = line.quantity + 0
+            if not line.quantity or line.display_type in ("line_section", "line_note"):
+                quantity = 0
+            else:
+                quantity = line.quantity
 
             # lo SdI non accetta quantità negative, quindi invertiamo price_unit
             # e quantity (vd. format_price)
@@ -303,7 +306,7 @@ class EFatturaOut:
             # i controlli precedenti dovrebbero escludere errori di sintassi XML
             # with open("/tmp/fatturaout.xml", "wb") as o:
             #    o.write(etree.tostring(root, xml_declaration=True, encoding="utf-8"))
-            raise UserError("\n".join(e.message for e in errors))
+            raise UserError("\n".join(str(e) for e in errors))
         content = etree.tostring(root, xml_declaration=True, encoding="utf-8")
         return content
 
