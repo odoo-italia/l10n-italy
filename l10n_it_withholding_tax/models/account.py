@@ -131,7 +131,7 @@ class AccountPartialReconcile(models.Model):
                 amount_wt, rec_line_payment.date or False
             )
             if payment_lines and payment_lines[0]:
-                p_date_maturity = payment_lines[0][0][0]
+                p_date_maturity = payment_lines[0][0]
             wt_move_vals = {
                 "statement_id": wt_st.id,
                 "date": rec_line_payment.date,
