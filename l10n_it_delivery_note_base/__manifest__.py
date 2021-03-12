@@ -19,6 +19,7 @@
     "maintainers": ["As400it", "Byloth"],
     "depends": ["base"],
     "data": [
+        "security/ir.model.access.csv",
         "data/delivery_note_data.xml",
         "security/ir_module_category.xml",
         "security/ir_rule.xml",
