@@ -18,15 +18,18 @@ class FatturaPACommon(AccountTestInvoicingCommon):
         self.account_model = self.env["account.account"]
 
         # self.company = self.env.ref("base.main_company")
-        self.company = self.env["res.company"].browse(self.env.companies.ids[0])
+        # self.company = self.env["res.company"].browse(self.env.companies.ids[0])
         self.account_manager = mail_new_test_user(
             self.env,
             name="Adviser",
             login="fm",
             email="accountmanager@yourcompany.com",
             groups="account.group_account_manager,base.group_partner_manager",
-            company_ids=[(6, 0, self.env.companies.ids)],
+            company_ids=[(6, 0, [self.env.company.id])],
         )
+        self.env.user = self.account_manager
+        self.company = self.env.company
+
         self.wizard_model = self.env["wizard.export.fatturapa"]
         self.data_model = self.env["ir.model.data"]
         self.attach_model = self.env["fatturapa.attachment.out"]
@@ -35,7 +38,7 @@ class FatturaPACommon(AccountTestInvoicingCommon):
         self.context = {}
         self.maxDiff = None
         self.sales_journal = self.env["account.journal"].search(
-            [("type", "=", "sale")]
+            [("type", "=", "sale"), ("company_id", "=", self.env.company.id)]
         )[0]
         account_user_type = self.env.ref("account.data_account_type_receivable")
         self.a_recv = self.account_model.with_user(self.account_manager.id).create(
@@ -57,7 +60,13 @@ class FatturaPACommon(AccountTestInvoicingCommon):
             limit=1,
         )
         self.account_payment_term = self.env.ref(
-            "account.account_payment_term_immediate"
+            "account.account_payment_term_end_following_month"
+        )
+        self.account_payment_term.fatturapa_pt_id = self.env.ref(
+            "l10n_it_fiscal_payment_term.fatturapa_tp02"
+        )
+        self.account_payment_term.fatturapa_pm_id = self.env.ref(
+            "l10n_it_fiscal_payment_term.fatturapa_mp05"
         )
         self.user_demo = self.env.ref("base.user_demo")
         self.product_uom_unit = self.env.ref("uom.product_uom_unit")
@@ -67,9 +76,21 @@ class FatturaPACommon(AccountTestInvoicingCommon):
         self.product_product_10.barcode = False
         self.product_order_01.default_code = False
         self.product_order_01.barcode = False
-        self.tax_22 = self.env.ref("l10n_it_fatturapa.tax_22")
-        self.tax_10 = self.env.ref("l10n_it_fatturapa.tax_10")
-        self.tax_22_SP = self.env.ref("l10n_it_fatturapa.tax_22_SP")
+        self.tax_22 = (
+            self.env.ref("l10n_it_fatturapa.tax_22")
+            .sudo()
+            .copy({"company_id": self.env.company.id})
+        )
+        self.tax_10 = (
+            self.env.ref("l10n_it_fatturapa.tax_10")
+            .sudo()
+            .copy({"company_id": self.env.company.id})
+        )
+        self.tax_22_SP = (
+            self.env.ref("l10n_it_fatturapa.tax_22_SP")
+            .sudo()
+            .copy({"company_id": self.env.company.id})
+        )
         self.res_partner_fatturapa_0 = self.env.ref(
             "l10n_it_fatturapa.res_partner_fatturapa_0"
         )
@@ -84,7 +105,11 @@ class FatturaPACommon(AccountTestInvoicingCommon):
         self.res_partner_fatturapa_4 = self.env.ref(
             "l10n_it_fatturapa.res_partner_fatturapa_4"
         )
-        self.fiscal_position_sp = self.env.ref("l10n_it_fatturapa.fiscal_position_sp")
+        self.fiscal_position_sp = (
+            self.env.ref("l10n_it_fatturapa.fiscal_position_sp")
+            .sudo()
+            .copy({"company_id": self.env.company.id})
+        )
         self.company.sp_account_id = self.env["account.account"].search(
             [
                 (
@@ -114,7 +139,9 @@ class FatturaPACommon(AccountTestInvoicingCommon):
 
     def set_sequences(self, invoice_number, dt):
         seq_pool = self.env["ir.sequence"]
-        inv_seq = seq_pool.search([("name", "=", "INV Sequence")], limit=1)
+        inv_seq = seq_pool.search(
+            [("name", "=", "Customer Invoices : Check Number Sequence")], limit=1
+        )
         seq_date = self.env["ir.sequence.date_range"].search(
             [
                 ("sequence_id", "=", inv_seq.id),
@@ -140,7 +167,7 @@ class FatturaPACommon(AccountTestInvoicingCommon):
         xml = etree.fromstring(xml_content, parser)
         file_id = xml.findall(".//ProgressivoInvio")
         file_id[0].text = test_file_id
-        e_invoice.datas = base64.encodestring(etree.tostring(xml))
+        e_invoice.datas = base64.encodebytes(etree.tostring(xml))
         e_invoice.name = file_name
 
     def check_content(self, xml_content, file_name, module_name=None):
