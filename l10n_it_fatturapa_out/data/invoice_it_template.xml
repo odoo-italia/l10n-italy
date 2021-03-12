@@ -157,8 +157,7 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                         t-if="line.name"
                         t-esc="encode_for_export(line.name, 1000)"
                     /><t t-if="not line.name" t-esc="'NO NAME'" /></Descrizione>
-                <Quantita t-if="not is_note" t-esc="format_quantity(line)" />
-                <Quantita t-if="is_note">0.00</Quantita>
+                <Quantita t-esc="format_quantity(line)" />
                 <UnitaMisura
                     t-if="line.product_uom_id.name"
                     t-esc="unidecode(line.product_uom_id.name)"
@@ -568,10 +567,6 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                             t-call="l10n_it_fatturapa_out.account_invoice_line_it_FatturaPA"
                         />
                     </t>
-                    <t
-                        t-set="tax_line_ids"
-                        t-value="record.line_ids.filtered(lambda line: line.tax_line_id)"
-                    />
                     <t t-foreach="get_all_taxes(record)" t-as="tax_data">
                        <DatiRiepilogo>
                               <!--2.2.2-->
