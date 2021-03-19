@@ -16,7 +16,7 @@ def migrate(env, version):
         env.cr,
         [
             (
-                "l10n_it_vat_payability.view_tax_code_esigibilita_form",
+                "l10n_it_esigibilita_iva.view_tax_code_esigibilita_form",
                 "l10n_it_vat_payability.view_tax_code_payability_form",
             ),
         ],

@@ -17,9 +17,6 @@
         "l10n_it_fatturapa_out",
         "l10n_it_fatturapa_in",
     ],
-    "external_dependencies": {
-        "python": ["zipfile"],
-    },
     "data": [
         "security/ir.model.access.csv",
         "wizard/export_fatturapa_view.xml",
