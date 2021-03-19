@@ -20,15 +20,6 @@ class FatturapaFormat(models.Model):
     code = fields.Char("Code", size=5)
 
 
-class FatturapaDocumentType(models.Model):
-    # _position = ['2.1.1.1']
-    _name = "fatturapa.document_type"
-    _description = "E-invoice Document Type"
-
-    name = fields.Char("Description", size=128)
-    code = fields.Char("Code", size=4)
-
-
 #  used in fatturaPa import
 class FatturapaPaymentData(models.Model):
     # _position = ['2.4.2.2']
