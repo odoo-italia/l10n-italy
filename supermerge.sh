@@ -43,7 +43,6 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2138/h
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2139/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2140/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2141/head
-git pull --no-ff --no-edit --quiet https://github.com/odoo-italia/l10n-italy 14.0-mig-l10n_it_fatturapa_import_zip
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2149/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2151/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2153/head
