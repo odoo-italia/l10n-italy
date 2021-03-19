@@ -512,9 +512,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
         invoice = self.invoice_model.create(
             {
                 "name": "INV/2019/0010",
-                "fiscal_document_type_id": self.env.ref(
-                    "l10n_it_fatturapa.fatturapa_TD01"
-                ).id,
                 "invoice_date": "2019-08-07",
                 "partner_id": self.res_partner_fatturapa_2.id,
                 "journal_id": self.sales_journal.id,
