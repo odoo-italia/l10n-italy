@@ -40,6 +40,6 @@
     "demo": ["demo/account_invoice_fatturapa.xml"],
     "installable": True,
     "external_dependencies": {
-        "python": ["PyXB >= 1.2.6", "asn1crypto"],
+        "python": ["asn1crypto"],
     },
 }
