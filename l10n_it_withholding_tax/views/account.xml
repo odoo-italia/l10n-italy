@@ -32,7 +32,6 @@
                     />
                 </xpath>
 
-<!--
                 <xpath expr="//field[@name='narration']" position="before">
                     <field
                         name="withholding_tax_line_ids"
@@ -60,7 +59,6 @@
                     </field>
                 </xpath>
 
--->
                 <xpath
                     expr="//group[hasclass('oe_subtotal_footer', 'oe_right')]/field[@name='amount_total']"
                     position="after"

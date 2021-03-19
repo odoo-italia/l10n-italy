@@ -183,6 +183,7 @@ class AccountAbstractPayment(models.Model):
         """
         rec = super(AccountAbstractPayment, self).default_get(fields)
         invoice_defaults = self.new({"invoice_ids": rec.get("invoice_ids")}).invoice_ids
+
         if invoice_defaults and len(invoice_defaults) == 1:
             invoice = invoice_defaults[0]
             if (
@@ -309,7 +310,7 @@ class AccountMove(models.Model):
                     wt_line.tax, dp_obj.precision_get("Account")
                 )
             invoice.amount_net_pay = invoice.amount_total - withholding_tax_amount
-            # amount_net_pay_residual = invoice.amount_net_pay
+            amount_net_pay_residual = invoice.amount_net_pay
             invoice.withholding_tax_amount = withholding_tax_amount
             for line in invoice.line_ids._reconciled_lines():
                 if not line.withholding_tax_generated_by_move_id:
