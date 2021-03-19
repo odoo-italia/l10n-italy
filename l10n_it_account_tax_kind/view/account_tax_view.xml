@@ -7,8 +7,11 @@
         <field name="inherit_id" ref="account.view_tax_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='tax_group_id']" position="after">
-                <field name="kind_id"/>
-                <field name="law_reference" attrs="{'required': [('kind_id', '!=', False),('type_tax_use', '!=', 'purchase')], 'invisible': ['|',('kind_id', '=', False),('type_tax_use', '=', 'purchase')]}"/>
+                <field name="kind_id" />
+                <field
+                    name="law_reference"
+                    attrs="{'required': [('kind_id', '!=', False),('type_tax_use', '!=', 'purchase')], 'invisible': ['|',('kind_id', '=', False),('type_tax_use', '=', 'purchase')]}"
+                />
             </xpath>
         </field>
     </record>
