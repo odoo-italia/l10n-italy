@@ -3,6 +3,7 @@
 
 from openupgradelib import openupgrade
 
+
 @openupgrade.migrate()
 def migrate(env, version):
     openupgrade.rename_models(
@@ -19,4 +20,3 @@ def migrate(env, version):
             ("faturapa_summary_data", "fatturapa_summary_data"),
         ],
     )
-
