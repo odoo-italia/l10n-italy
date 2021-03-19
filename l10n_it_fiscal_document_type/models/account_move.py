@@ -7,9 +7,9 @@ class AccountMove(models.Model):
     @api.depends("partner_id", "journal_id", "move_type", "fiscal_position_id")
     def _compute_set_document_fiscal_type(self):
         for invoice in self:
-            invoice.fiscal_document_type_id = False
-            if invoice.state != "draft":
+            if invoice.state != "draft" and invoice.fiscal_document_type_id:
                 continue
+            invoice.fiscal_document_type_id = False
             dt = invoice._get_document_fiscal_type(
                 invoice.move_type,
                 invoice.partner_id,
