@@ -19,7 +19,7 @@
     ],
     "data": [
         "views/account_view.xml",
-        # "views/partner_view.xml",
+        "views/partner_view.xml",
         "wizard/wizard_import_fatturapa_view.xml",
         "wizard/link_to_existing_invoice.xml",
         "views/company_view.xml",
