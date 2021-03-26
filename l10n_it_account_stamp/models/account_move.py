@@ -23,7 +23,7 @@ class AccountMove(models.Model):
         total_tax_base = 0.0
         for inv_tax in self.line_ids.filtered(lambda line: line.tax_line_id):
             if inv_tax.tax_line_id.id in \
-                    stamp_product_id.stamp_apply_tax_ids.ids:
+                stamp_product_id.stamp_apply_tax_ids.ids:
                 total_tax_base += inv_tax.tax_base_amount
         if total_tax_base >= stamp_product_id.stamp_apply_min_total_base:
             return True
@@ -85,8 +85,8 @@ class AccountMove(models.Model):
             inv.write({'invoice_line_ids': [(0, 0, invoice_line_vals)]})
 
     def is_tax_stamp_line_present(self):
-        for line in self.invoice_line_ids:
-            if line.product_id and line.product_id.is_stamp:
+        for line in self.line_ids:
+            if line.is_stamp_line:
                 return True
         return False
 
@@ -103,6 +103,7 @@ class AccountMove(models.Model):
 
         income_vals = {
             "name": _("Tax Stamp Income"),
+            "is_stamp_line": True,
             "partner_id": self.partner_id.id,
             "account_id": product.property_account_income_id.id,
             "journal_id": self.journal_id.id,
@@ -117,6 +118,7 @@ class AccountMove(models.Model):
 
         expense_vals = {
             "name": _("Tax Stamp Expense"),
+            "is_stamp_line": True,
             "partner_id": self.partner_id.id,
             "account_id": product.property_account_expense_id.id,
             "journal_id": self.journal_id.id,
@@ -163,5 +165,5 @@ class AccountMove(models.Model):
 class AccountInvoiceLine(models.Model):
     _inherit = "account.move.line"
 
-    is_stamp_line = fields.Boolean(related="product_id.is_stamp",
-                                   readonly=True)
+    is_stamp_line = fields.Boolean(
+        readonly=True)  # used only with automatic tax stamp active
