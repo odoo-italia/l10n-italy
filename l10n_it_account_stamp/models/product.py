@@ -3,7 +3,6 @@
 from odoo import _, api, exceptions, fields, models
 
 
-
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 

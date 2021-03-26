@@ -20,12 +20,12 @@ Automatic mode:
 
 - Go to 'Tax Stamp 2 euro' product and configure 'Stamp taxes' (exemption taxes).
 
-- For each invoice, the base amount for each selected tax will be added up and used to automatically determine the application of the account stamp.
+- For each invoice, the base amount for each selected tax will be added up and used to determine the application of the account stamp.
 
 Manual mode:
 
 - Go to 'Tax Stamp 2 euro' product and deselect 'Auto-compute' checkbox.
 
-- For each invoice, manually enable 'Tax Stamp' checkbox. The base amount for each selected tax will be added up and used to determine the application of the account stamp.
+- For each invoice, manually enable 'Tax Stamp' checkbox.
 
 Also set income/expense accounts, typically income = 'Debiti per bolli' and expense = 'Valori bollati'.
