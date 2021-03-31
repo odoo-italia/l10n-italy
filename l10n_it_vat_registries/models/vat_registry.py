@@ -57,7 +57,7 @@ class ReportRegistroIva(models.AbstractModel):
         return formatted_date or ""
 
     def _get_invoice_from_move(self, move):
-        return self.env["account.invoice"].search([("move_id", "=", move.id)])
+        return self.env["account.move"].search([("id", "=", move.id)])
 
     def _get_move_line(self, move, data):
         return [move_line for move_line in move.line_ids]
@@ -163,8 +163,8 @@ class ReportRegistroIva(models.AbstractModel):
                 "tax": amounts_by_tax_id[tax_id]["tax"],
                 "index": index,
                 "invoice_type": invoice_type,
-                "invoice_date": (invoice and invoice.date_invoice or move.date or ""),
-                "reference": (invoice and invoice.reference or ""),
+                "invoice_date": (invoice and invoice.invoice_date or move.date or ""),
+                "reference": (invoice and invoice.name or ""),
                 # These 4 items are added to make the dictionary more usable
                 # in further customizations, allowing inheriting modules to
                 # retrieve the records that have been used to create the
