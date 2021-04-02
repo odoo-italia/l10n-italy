@@ -25,7 +25,8 @@ class AccountMove(models.Model):
             (
                 inv_tax.price_subtotal
                 for inv_tax in self.line_ids.filtered(
-                    lambda line: line.tax_ids & stamp_product_id.stamp_apply_tax_ids
+                    lambda line: set(line.tax_ids.ids)
+                    & set(stamp_product_id.stamp_apply_tax_ids.ids)
                 )
             ),
             0.0,
