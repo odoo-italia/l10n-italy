@@ -25,5 +25,6 @@
         "static/SP.png",
         "static/SP2.png",
     ],
+    "demo": ["demo/split_payment_demo.xml"],
     "installable": True,
 }
