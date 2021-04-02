@@ -8,7 +8,7 @@ class EInvoiceCommon(FatturaPACommon):
     def setUp(self):
         super(EInvoiceCommon, self).setUp()
         self.account_model = self.env["account.account"]
-        self.invoice_model = self.env["account.invoice"]
+        self.invoice_model = self.env["account.move"]
         self.wizard_model = self.env["wizard.export.fatturapa"]
 
         self.account_receivable_id = self.account_model.create(
@@ -29,10 +29,10 @@ class EInvoiceCommon(FatturaPACommon):
         )
         self.partner = self.env.ref("l10n_it_fatturapa.res_partner_fatturapa_2")
         self.product = self.env.ref("product.product_product_5")
-        self.env.user.company_id.sdi_channel_id = self.env.ref(
+        self.env.company.sdi_channel_id = self.env.ref(
             "l10n_it_sdi_channel.sdi_channel_pec"
         )
-        self.env.user.company_id.sdi_channel_id.pec_server_id = self.env[
+        self.env.company.sdi_channel_id.pec_server_id = self.env[
             "ir.mail_server"
         ].create(
             {

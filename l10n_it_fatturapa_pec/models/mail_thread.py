@@ -219,7 +219,9 @@ class MailThread(models.AbstractModel):
                 company_id = sdi_chan.company_id.id
                 e_invoice_user_id = sdi_chan.company_id.e_invoice_user_id.id
         if e_invoice_user_id:
-            fatturapa_attachment_in = fatturapa_attachment_in.sudo(e_invoice_user_id)
+            fatturapa_attachment_in = fatturapa_attachment_in.with_user(
+                e_invoice_user_id
+            )
         if attachment.mimetype == "application/zip":
             with zipfile.ZipFile(io.BytesIO(decoded)) as zf:
                 for file_name in zf.namelist():
