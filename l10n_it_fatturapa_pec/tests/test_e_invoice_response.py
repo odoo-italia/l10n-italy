@@ -13,7 +13,7 @@ class TestEInvoiceResponse(EInvoiceCommon):
     def setUp(self):
         super(TestEInvoiceResponse, self).setUp()
         self.PEC_server = self._create_fetchmail_pec_server()
-        self.env.user.company_id.vat = "IT03339130126"
+        self.env.company.vat = "IT03339130126"
         self.set_sequences(15, "2018-01-07")
         self.attach_in_model = self.env["fatturapa.attachment.in"]
 
@@ -141,7 +141,7 @@ class TestEInvoiceResponse(EInvoiceCommon):
     def test_process_response_MC(self):
         """Receiving a 'Mancata consegna' sets the state of the
         e-invoice to 'recipient_error'"""
-        self.env.user.company_id.vat = "IT14627831002"
+        self.env.company.vat = "IT14627831002"
         self.set_sequences(2621, "2019-01-08")
         e_invoice = self._create_e_invoice()
         self.set_e_invoice_file_id(e_invoice, "IT14627831002_02621.xml")
