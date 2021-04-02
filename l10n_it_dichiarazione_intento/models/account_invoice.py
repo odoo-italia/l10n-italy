@@ -245,11 +245,15 @@ class AccountMove(models.Model):
 
     def get_declaration_residual_amounts(self, declarations):
         """Get residual amount for every `declarations`."""
-        sign = 1 if self.move_type in ["out_invoice", "in_refund"] else -1
         dichiarazioni_amounts = {}
+        # If the tax amount is 0, then there is no line representing the tax
+        # so there will be no line having tax_line_id.
+        # Therefore we choose instead the lines that
+        # should generate the tax line i.e. the lines that have `tax_ids`
         tax_lines = self.line_ids.filtered("tax_ids")
         for tax_line in tax_lines:
-            amount = sign * tax_line.tax_base_amount
+            # Move lines having `tax_ids` represent the base amount for those taxes
+            amount = tax_line.price_subtotal
             for declaration in declarations:
                 if declaration.id not in dichiarazioni_amounts:
                     dichiarazioni_amounts[declaration.id] = declaration.available_amount

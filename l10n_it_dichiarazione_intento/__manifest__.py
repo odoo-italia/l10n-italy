@@ -4,7 +4,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
-    "name": "ITA - Declaration of intent",
+    "name": "ITA - Dichiarazione di intento",
     "summary": "Gestione dichiarazioni di intento",
     "version": "14.0.1.0.0",
     "license": "AGPL-3",

@@ -91,7 +91,7 @@ class DichiarazioneIntento(models.Model):
         #       to create an in declaration
         # Declaration issued by company are "IN"
         if values.get("type", False) == "in":
-            year = datetime.strptime(values["date_start"], "%Y-%m-%d").strftime("%Y")
+            year = values["date_start"].strftime("%Y")
             plafond = self.env.user.company_id.dichiarazione_yearly_limit_ids.filtered(
                 lambda r: r.year == year
             )

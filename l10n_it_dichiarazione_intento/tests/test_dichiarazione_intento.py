@@ -5,11 +5,11 @@ from datetime import datetime, timedelta
 
 from odoo import fields
 from odoo.exceptions import UserError, ValidationError
-from odoo.tests.common import Form, TransactionCase
+from odoo.tests.common import Form, SavepointCase
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 
-class TestDichiarazioneIntento(TransactionCase):
+class TestDichiarazioneIntento(SavepointCase):
     def _create_dichiarazione(self, partner, type_d):
         return self.env["dichiarazione.intento"].create(
             {
@@ -27,9 +27,11 @@ class TestDichiarazioneIntento(TransactionCase):
             }
         )
 
-    def _create_invoice(self, name, partner, tax=False, date=False):
+    def _create_invoice(self, name, partner, tax=False, date=False, in_type=False):
         invoice_form = Form(
-            self.env["account.move"].with_context(default_move_type="out_invoice")
+            self.env["account.move"].with_context(
+                default_move_type="in_invoice" if in_type else "out_invoice"
+            )
         )
         invoice_form.partner_id = partner
         invoice_form.invoice_date = date if date else self.today_date
@@ -41,7 +43,7 @@ class TestDichiarazioneIntento(TransactionCase):
         with invoice_form.invoice_line_ids.new() as invoice_line:
             invoice_line.product_id = self.env.ref("product.product_product_5")
             invoice_line.quantity = 10.00
-            invoice_line.account_id = self.a_sale
+            invoice_line.account_id = self.a_cost if in_type else self.a_sale
             invoice_line.name = "test line"
             invoice_line.price_unit = 90.00
             if tax:
@@ -88,10 +90,21 @@ class TestDichiarazioneIntento(TransactionCase):
             ],
             limit=1,
         )
+        self.a_cost = self.env["account.account"].search(
+            [
+                (
+                    "user_type_id",
+                    "=",
+                    self.env.ref("account.data_account_type_direct_costs").id,
+                )
+            ],
+            limit=1,
+        )
         self.today_date = fields.Date.today()
         self.partner1 = self.env.ref("base.res_partner_2")
         self.partner2 = self.env.ref("base.res_partner_12")
         self.partner3 = self.env.ref("base.res_partner_10")
+        self.partner4 = self.env.ref("base.res_partner_4")
         self.tax22 = self.tax_model.create(
             {
                 "name": "22%",
@@ -171,6 +184,14 @@ class TestDichiarazioneIntento(TransactionCase):
         self.dichiarazione1 = self._create_dichiarazione(self.partner1, "out")
         self.dichiarazione2 = self._create_dichiarazione(self.partner2, "out")
         self.dichiarazione3 = self._create_dichiarazione(self.partner2, "out")
+        self.env["dichiarazione.intento.yearly.limit"].create(
+            {
+                "year": self.today_date.year,
+                "limit_amount": 50000.0,
+                "company_id": self.env.user.company_id.id,
+            }
+        )
+        self.dichiarazione4 = self._create_dichiarazione(self.partner4, "in")
         self.invoice1 = self._create_invoice("1", self.partner1)
         self.invoice2 = self._create_invoice("2", self.partner1, tax=self.tax1)
         self.invoice3 = self._create_invoice("3", self.partner1, tax=self.tax1)
@@ -187,6 +208,9 @@ class TestDichiarazioneIntento(TransactionCase):
         )
         self.invoice4 = self._create_invoice("4", self.partner3, tax=self.tax22)
         self.invoice4.fiscal_position_id = self.fiscal_position2.id
+        self.invoice5 = self._create_invoice(
+            "5", self.partner4, tax=self.tax1, in_type=True
+        )
 
     def test_dichiarazione_data(self):
         self.assertTrue(self.dichiarazione1.number)
@@ -285,3 +309,10 @@ class TestDichiarazioneIntento(TransactionCase):
     def test_fiscal_position_no_dichiarazione(self):
         self.invoice4._onchange_date_invoice()
         self.assertEqual(self.invoice4.fiscal_position_id.id, self.fiscal_position2.id)
+
+    def test_invoice_vendor_with_no_effect_on_dichiarazione(self):
+        previous_used_amount = self.dichiarazione4.used_amount
+        self.assertAlmostEqual(previous_used_amount, 0.0, 2)
+        self.invoice5.action_post()
+        post_used_amount = self.dichiarazione4.used_amount
+        self.assertAlmostEqual(post_used_amount, 900.0, 2)
