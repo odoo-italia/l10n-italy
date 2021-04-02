@@ -11,15 +11,6 @@ RELATED_DOCUMENT_TYPES = {
 }
 
 
-class FatturapaFormat(models.Model):
-    # _position = ['1.1.3']
-    _name = "fatturapa.format"
-    _description = "E-invoice Format"
-
-    name = fields.Char("Description", size=128)
-    code = fields.Char("Code", size=5)
-
-
 #  used in fatturaPa import
 class FatturapaPaymentData(models.Model):
     # _position = ['2.4.2.2']
@@ -113,27 +104,6 @@ class WelfareFundDataLine(models.Model):
     welfare_Iva_tax = fields.Float("VAT Tax Rate")
     subjected_withholding = fields.Char("Subjected to Withholding", size=2)
     pa_line_code = fields.Char("PA Code for this Record", size=20)
-    invoice_id = fields.Many2one(
-        "account.move", "Related Invoice", ondelete="cascade", index=True
-    )
-
-
-class WithholdingDataLine(models.Model):
-    _name = "withholding.data.line"
-    _description = "E-invoice Withholding Data"
-
-    name = fields.Selection(
-        selection=[
-            ("RT01", "Natural Person"),
-            ("RT02", "Legal Person"),
-            ("RT03", "INPS"),
-            ("RT04", "ENASARCO"),
-            ("RT05", "ENPAM"),
-            ("RT06", "OTHER"),
-        ],
-        string="Withholding Type",
-    )
-    amount = fields.Float("Withholding amount")
     invoice_id = fields.Many2one(
         "account.move", "Related Invoice", ondelete="cascade", index=True
     )

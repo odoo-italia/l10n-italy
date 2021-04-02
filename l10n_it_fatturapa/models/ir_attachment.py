@@ -8,7 +8,7 @@ import lxml.etree as ET
 
 from odoo import fields, models
 from odoo.exceptions import UserError
-from odoo.modules import get_module_resource
+from odoo.modules import get_resource_path
 from odoo.tools.translate import _
 
 _logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class Attachment(models.Model):
     def _compute_ftpa_preview_link(self):
         for att in self:
             att.ftpa_preview_link = (
-                self.get_base_url() + "/fatturapa/preview/%s" % att.id
+                att.get_base_url() + "/fatturapa/preview/%s" % att.id
             )
 
     def remove_xades_sign(self, xml):
@@ -104,7 +104,7 @@ class Attachment(models.Model):
             raise UserError(_("Invalid xml %s.") % e.args)
 
     def get_fattura_elettronica_preview(self):
-        xsl_path = get_module_resource(
+        xsl_path = get_resource_path(
             "l10n_it_fatturapa",
             "data",
             self.env.company.fatturapa_preview_style,

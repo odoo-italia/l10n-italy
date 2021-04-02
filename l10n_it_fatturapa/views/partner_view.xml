@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
     <record model="ir.ui.view" id="view_partner_form_fatturapa">
         <field name="name">partner.form.fatturapa</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="account.view_partner_property_form" />
+        <field name="inherit_id" ref="l10n_it_fatturapa.view_partner_form_e_inv" />
         <field name="arch" type="xml">
             <notebook position="inside">
             <page
@@ -13,8 +12,10 @@
                     groups="account.group_account_invoice"
                 >
                 <group name="fatturapa_group">
+                    <group>
                     <label for="electronic_invoice_no_contact_update" />
                     <field name="electronic_invoice_no_contact_update" />
+                </group>
                     <group>
                         <field name="electronic_invoice_subjected" />
                         <field
@@ -43,6 +44,11 @@
                 </group>
             </page>
             </notebook>
+            <xpath expr="//group[@name='e_invoice_info']" position="attributes">
+                <attribute
+                    name="attrs"
+                >{'invisible': ['|', ('type', '=', 'contact'), '|', ('parent.electronic_invoice_subjected', '=', False), ('parent.electronic_invoice_obliged_subject', '=', False)]}</attribute>
+            </xpath>
         </field>
     </record>
 
