@@ -14,7 +14,6 @@ import odoo.addons.decimal_precision as dp
 
 
 class AccountVatPeriodEndStatement(models.Model):
-    @api.multi
     def _compute_authority_vat_amount(self):
         for statement in self:
             debit_vat_amount = 0.0
@@ -38,7 +37,6 @@ class AccountVatPeriodEndStatement(models.Model):
             )
             statement.authority_vat_amount = authority_amount
 
-    @api.multi
     def _compute_deductible_vat_amount(self):
         for statement in self:
             credit_vat_amount = 0.0
@@ -46,12 +44,11 @@ class AccountVatPeriodEndStatement(models.Model):
                 credit_vat_amount += credit_line.amount
             statement.deductible_vat_amount = credit_vat_amount
 
-    @api.multi
     @api.depends(
         "state", "move_id.line_ids.amount_residual", "move_id.line_ids.currency_id"
     )
     def _compute_residual(self):
-        precision = self.env.user.company_id.currency_id.decimal_places
+        precision = self.env.company.currency_id.decimal_places
         for statement in self:
             if not statement.move_id.exists():
                 statement.residual = 0.0
@@ -70,7 +67,6 @@ class AccountVatPeriodEndStatement(models.Model):
                 statement.reconciled = False
 
     @api.depends("move_id.line_ids.amount_residual")
-    @api.multi
     def _compute_lines(self):
         for statement in self:
             payment_lines = []
@@ -100,12 +96,12 @@ class AccountVatPeriodEndStatement(models.Model):
 
     @api.model
     def _get_default_interest(self):
-        company = self.env.user.company_id
+        company = self.env.company
         return company.of_account_end_vat_statement_interest
 
     @api.model
     def _get_default_interest_percent(self):
-        company = self.env.user.company_id
+        company = self.env.company
         if not company.of_account_end_vat_statement_interest:
             return 0
         return company.of_account_end_vat_statement_interest_percent
@@ -330,13 +326,10 @@ class AccountVatPeriodEndStatement(models.Model):
     company_id = fields.Many2one(
         "res.company",
         "Company",
-        default=lambda self: self.env["res.company"]._company_default_get(
-            "account.invoice"
-        ),
+        default=lambda self: self.env.company,
     )
     annual = fields.Boolean("Annual prospect")
 
-    @api.multi
     def unlink(self):
         for statement in self:
             if statement.state == "confirmed" or statement.state == "paid":
@@ -344,14 +337,12 @@ class AccountVatPeriodEndStatement(models.Model):
         res = super(AccountVatPeriodEndStatement, self).unlink()
         return res
 
-    @api.multi
     def set_fiscal_year(self):
         for statement in self:
             if statement.date_range_ids:
                 date = min([x.date_start for x in statement.date_range_ids])
                 statement.update({"fiscal_year": date.year})
 
-    @api.multi
     def _write(self, vals):
         pre_not_reconciled = self.filtered(lambda statement: not statement.reconciled)
         pre_reconciled = self - pre_not_reconciled
@@ -366,7 +357,6 @@ class AccountVatPeriodEndStatement(models.Model):
         ).statement_confirmed()
         return res
 
-    @api.multi
     def statement_draft(self):
         for statement in self:
             if statement.move_id:
@@ -374,12 +364,10 @@ class AccountVatPeriodEndStatement(models.Model):
                 statement.move_id.unlink()
             statement.state = "draft"
 
-    @api.multi
     def statement_paid(self):
         for statement in self:
             statement.state = "paid"
 
-    @api.multi
     def statement_confirmed(self):
         for statement in self:
             statement.state = "confirmed"
@@ -390,18 +378,17 @@ class AccountVatPeriodEndStatement(models.Model):
         self.ensure_one()
         debit_vat_data = {
             "name": _(name),
-            "account_id": account_id.id,
-            "move_id": move_id.id,
+            "account_id": account_id,
+            "move_id": move_id,
             "journal_id": statement.journal_id.id,
             "debit": 0.0,
             "credit": 0.0,
             "date": statement_date,
             "company_id": statement.company_id.id,
-            "partner_id": partner_id.id,
+            "partner_id": partner_id,
         }
         return debit_vat_data
 
-    @api.multi
     def create_move(self):
         move_obj = self.env["account.move"]
         for statement in self:
@@ -440,7 +427,7 @@ class AccountVatPeriodEndStatement(models.Model):
             )
 
             move.line_ids = lines_to_create
-            move.post()
+            move.action_post()
             statement.state = "confirmed"
 
         return True
@@ -448,11 +435,11 @@ class AccountVatPeriodEndStatement(models.Model):
     def _add_end_debit_vat_data(self, lines_to_create, move, statement, statement_date):
         end_debit_vat_data = self._prepare_account_move_line(
             name="Tax Authority VAT",
-            account_id=statement.authority_vat_account_id,
-            move_id=move,
+            account_id=statement.authority_vat_account_id.id,
+            move_id=move.id,
             statement=statement,
             statement_date=statement_date,
-            partner_id=statement.authority_partner_id,
+            partner_id=statement.authority_partner_id.id,
         )
         if statement.authority_vat_amount > 0:
             end_debit_vat_data["credit"] = math.fabs(statement.authority_vat_amount)
@@ -475,8 +462,8 @@ class AccountVatPeriodEndStatement(models.Model):
         for generic_line in statement.generic_vat_account_line_ids:
             generic_vat_data = self._prepare_account_move_line(
                 name="Other VAT Credits / Debits",
-                account_id=generic_line.account_id,
-                move_id=move,
+                account_id=generic_line.account_id.id,
+                move_id=move.id,
                 statement=statement,
                 statement_date=statement_date,
             )
@@ -490,8 +477,8 @@ class AccountVatPeriodEndStatement(models.Model):
         if statement.interests_debit_vat_amount:
             interests_data = self._prepare_account_move_line(
                 name="Due interests",
-                account_id=statement.interests_debit_vat_account_id,
-                move_id=move,
+                account_id=statement.interests_debit_vat_account_id.id,
+                move_id=move.id,
                 statement=statement,
                 statement_date=statement_date,
             )
@@ -511,8 +498,8 @@ class AccountVatPeriodEndStatement(models.Model):
         if statement.previous_debit_vat_amount:
             previous_debit_vat_data = self._prepare_account_move_line(
                 name="Previous Debits VAT",
-                account_id=statement.previous_debit_vat_account_id,
-                move_id=move,
+                account_id=statement.previous_debit_vat_account_id.id,
+                move_id=move.id,
                 statement=statement,
                 statement_date=statement_date,
             )
@@ -530,8 +517,8 @@ class AccountVatPeriodEndStatement(models.Model):
         if statement.advance_amount:
             advance_vat_data = self._prepare_account_move_line(
                 name="Tax Credits",
-                account_id=statement.advance_account_id,
-                move_id=move,
+                account_id=statement.advance_account_id.id,
+                move_id=move.id,
                 statement=statement,
                 statement_date=statement_date,
             )
@@ -545,8 +532,8 @@ class AccountVatPeriodEndStatement(models.Model):
         if statement.tax_credit_amount:
             tax_credit_vat_data = self._prepare_account_move_line(
                 name="Tax Credits",
-                account_id=statement.tax_credit_account_id,
-                move_id=move,
+                account_id=statement.tax_credit_account_id.id,
+                move_id=move.id,
                 statement=statement,
                 statement_date=statement_date,
             )
@@ -562,8 +549,8 @@ class AccountVatPeriodEndStatement(models.Model):
         if statement.previous_credit_vat_amount:
             previous_credit_vat_data = self._prepare_account_move_line(
                 name="Previous Credits VAT",
-                account_id=statement.previous_credit_vat_account_id,
-                move_id=move,
+                account_id=statement.previous_credit_vat_account_id.id,
+                move_id=move.id,
                 statement=statement,
                 statement_date=statement_date,
             )
@@ -582,8 +569,8 @@ class AccountVatPeriodEndStatement(models.Model):
             if credit_line.amount != 0.0:
                 credit_vat_data = self._prepare_account_move_line(
                     name="Credit VAT",
-                    account_id=credit_line.account_id,
-                    move_id=move,
+                    account_id=credit_line.account_id.id,
+                    move_id=move.id,
                     statement=statement,
                     statement_date=statement_date,
                 )
@@ -598,8 +585,8 @@ class AccountVatPeriodEndStatement(models.Model):
             if debit_line.amount != 0.0:
                 debit_vat_data = self._prepare_account_move_line(
                     name="Debit VAT",
-                    account_id=debit_line.account_id,
-                    move_id=move,
+                    account_id=debit_line.account_id.id,
+                    move_id=move.id,
                     statement=statement,
                     statement_date=statement_date,
                 )
@@ -609,7 +596,6 @@ class AccountVatPeriodEndStatement(models.Model):
                     debit_vat_data["credit"] = math.fabs(debit_line.amount)
                 lines_to_create.append((0, 0, debit_vat_data))
 
-    @api.multi
     def compute_amounts(self):
         decimal_precision_obj = self.env["decimal.precision"]
         debit_line_model = self.env["statement.debit.account.line"]
@@ -637,7 +623,7 @@ class AccountVatPeriodEndStatement(models.Model):
                             )
                         }
                     )
-                    company = statement.company_id or self.env.user.company_id
+                    company = statement.company_id or self.env.company
                     statement_fiscal_year_dates = company.compute_fiscalyear_dates(
                         statement.date_range_ids
                         and statement.date_range_ids[0].date_start
@@ -765,12 +751,11 @@ class AccountVatPeriodEndStatement(models.Model):
 
     @api.onchange("interest")
     def onchange_interest(self):
-        company = self.env.user.company_id
+        company = self.env.company
         self.interest_percent = company.of_account_end_vat_statement_interest_percent
 
-    @api.multi
     def get_account_interest(self):
-        company = self.env.user.company_id
+        company = self.env.company
         if company.of_account_end_vat_statement_interest or any(
             [s.interest for s in self]
         ):
