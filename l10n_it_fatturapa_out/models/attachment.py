@@ -94,9 +94,7 @@ class FatturaPAAttachment(models.Model):
             attachment_out.has_pdf_invoice_print = False
             for invoice in attachment_out.out_invoice_ids:
                 invoice_attachments = invoice.fatturapa_doc_attachments
-                if any([ia.is_pdf_invoice_print for ia in invoice_attachments]):
-                    continue
-                else:
+                if not any([ia.is_pdf_invoice_print for ia in invoice_attachments]):
                     break
             else:
                 # We have examined all the invoices and none of them
