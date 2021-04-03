@@ -54,3 +54,4 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/h
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2195/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2198/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2200/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2202/head
