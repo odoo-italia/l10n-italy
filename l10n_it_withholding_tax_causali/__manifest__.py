@@ -12,7 +12,7 @@
     "installable": True,
     "depends": [
         "l10n_it_withholding_tax",
-        "l10n_it_causali_pagamento",
+        "l10n_it_payment_reason",
     ],
     "data": [
         "views/withholding_tax.xml",

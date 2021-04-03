@@ -105,7 +105,28 @@ class WelfareFundDataLine(models.Model):
     subjected_withholding = fields.Char("Subjected to Withholding", size=2)
     pa_line_code = fields.Char("PA Code for this Record", size=20)
     invoice_id = fields.Many2one(
-        "account.move", "Related Invoice", ondelete="cascade", index=True
+        "account.invoice", "Related Invoice", ondelete="cascade", index=True
+    )
+
+
+class WithholdingDataLine(models.Model):
+    _name = "withholding.data.line"
+    _description = "E-invoice Withholding Data"
+
+    name = fields.Selection(
+        selection=[
+            ("RT01", "Natural Person"),
+            ("RT02", "Legal Person"),
+            ("RT03", "INPS"),
+            ("RT04", "ENASARCO"),
+            ("RT05", "ENPAM"),
+            ("RT06", "OTHER"),
+        ],
+        string="Withholding Type",
+    )
+    amount = fields.Float("Withholding amount")
+    invoice_id = fields.Many2one(
+        "account.invoice", "Related Invoice", ondelete="cascade", index=True
     )
 
 
