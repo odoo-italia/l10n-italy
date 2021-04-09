@@ -43,10 +43,13 @@ class AccountMove(models.Model):
                 move.amount_tax = 0
             move.amount_total = move.amount_untaxed + move.amount_tax
 
-            if move.is_purchase_document():
-                raise UserError(_("Can't handle supplier invoices with split payment"))
-            else:
-                move._compute_split_payments()
+            if move.fiscal_position_id.split_payment:
+                if move.is_purchase_document():
+                    raise UserError(
+                        _("Can't handle supplier invoices with split payment")
+                    )
+                else:
+                    move._compute_split_payments()
 
     def _build_debit_line(self):
         if not self.company_id.sp_account_id:
@@ -73,6 +76,9 @@ class AccountMove(models.Model):
         return vals
 
     def set_receivable_line_ids(self):
+        """Recompute all account move lines by _recompute_dynamic_lines()
+        and set correct receivable lines
+        """
         self._recompute_dynamic_lines()
         if self.move_type == "out_invoice":
             line_client_ids = self.line_ids.filtered(
@@ -87,7 +93,7 @@ class AccountMove(models.Model):
                     ) / inv_total
                 else:
                     receivable_line_amount = 0
-                line_client.with_context(check_move_validity=False).write(
+                line_client.with_context(check_move_validity=False).update(
                     {"debit": receivable_line_amount}
                 )
         elif self.move_type == "out_refund":
@@ -103,28 +109,30 @@ class AccountMove(models.Model):
                     ) / inv_total
                 else:
                     receivable_line_amount = 0
-                line_client.with_context(check_move_validity=False).write(
+                line_client.with_context(check_move_validity=False).update(
                     {"credit": receivable_line_amount}
                 )
 
     def _compute_split_payments(self):
         write_off_line_vals = self._build_debit_line()
-        line_sp = self.line_ids.filtered(lambda l: l.is_split_payment)
+        line_sp = self.line_ids.filtered(
+            lambda l: l.is_split_payment or l.name == _("Split Payment Write Off")
+        )
         if line_sp:
             if (
                 self.move_type == "out_invoice"
-                and line_sp.debit != write_off_line_vals["debit"]
+                and line_sp[0].debit != write_off_line_vals["debit"]
             ):
-                line_sp.with_context(check_move_validity=False).write({"debit": 0})
+                line_sp[0].with_context(check_move_validity=False).update({"debit": 0})
                 self.set_receivable_line_ids()
-                line_sp.write({"debit": write_off_line_vals["debit"]})
+                line_sp[0].debit = write_off_line_vals["debit"]
             elif (
                 self.move_type == "out_refund"
-                and line_sp.credit != write_off_line_vals["credit"]
+                and line_sp[0].credit != write_off_line_vals["credit"]
             ):
-                line_sp.with_context(check_move_validity=False).write({"credit": 0})
+                line_sp[0].with_context(check_move_validity=False).update({"credit": 0})
                 self.set_receivable_line_ids()
-                line_sp.write({"credit": write_off_line_vals["credit"]})
+                line_sp[0].credit = write_off_line_vals["credit"]
         else:
             self.set_receivable_line_ids()
             if self.amount_sp:
