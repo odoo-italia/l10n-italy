@@ -64,13 +64,13 @@ class AccountMove(models.Model):
             for line in inv.invoice_line_ids:
                 if line.product_id and line.product_id.is_stamp:
                     raise Warning(
-                        _("Tax sss stamp line %s already present. " "Remove it first.")
+                        _("Tax stamp line %s already present. Remove it first.")
                         % line.name
                     )
             stamp_account = stamp_product_id.property_account_income_id
             if not stamp_account:
                 raise Warning(
-                    _("Missing account income configuration for" " %s")
+                    _("Missing account income configuration for %s")
                     % stamp_product_id.name
                 )
             invoice_line_vals = {
