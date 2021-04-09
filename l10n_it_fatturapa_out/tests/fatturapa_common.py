@@ -105,21 +105,6 @@ class FatturaPACommon(AccountTestInvoicingCommon):
         self.res_partner_fatturapa_4 = self.env.ref(
             "l10n_it_fatturapa.res_partner_fatturapa_4"
         )
-        self.fiscal_position_sp = (
-            self.env.ref("l10n_it_fatturapa.fiscal_position_sp")
-            .sudo()
-            .copy({"company_id": self.env.company.id})
-        )
-        self.company.sp_account_id = self.env["account.account"].search(
-            [
-                (
-                    "user_type_id",
-                    "=",
-                    self.env.ref("account.data_account_type_current_assets").id,
-                )
-            ],
-            limit=1,
-        )
         self.EUR = self.env.ref("base.EUR")
         # United Arab Emirates currency
         self.AED = self.env.ref("base.AED")
