@@ -179,6 +179,10 @@ class ResPartner(models.Model):
     def onchange_electronic_invoice_subjected(self):
         if not self.electronic_invoice_subjected:
             self.electronic_invoice_obliged_subject = False
+        else:
+            if self.supplier_rank > 0:
+                self.onchange_country_id_e_inv()
+                self.electronic_invoice_obliged_subject = True
 
     @api.onchange("electronic_invoice_obliged_subject")
     def onchange_e_inv_obliged_subject(self):
