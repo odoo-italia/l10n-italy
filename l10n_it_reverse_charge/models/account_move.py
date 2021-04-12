@@ -354,7 +354,6 @@ class AccountMove(models.Model):
         # because this field has copy=False
         supplier_invoice.date = self.date
         supplier_invoice.invoice_date = self.date
-        supplier_invoice.date_due = self.date
         supplier_invoice.partner_id = rc_type.partner_id.id
         supplier_invoice.journal_id = rc_type.supplier_journal_id.id
         for inv_line in supplier_invoice.invoice_line_ids:

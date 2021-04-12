@@ -1,14 +1,16 @@
 from odoo.tests.common import Form, TransactionCase
+from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
-class ReverseChargeCommon(TransactionCase):
-    def setUp(self):
-        super(ReverseChargeCommon, self).setUp()
-        self.invoice_model = self.env["account.move"].with_context(
+class ReverseChargeCommon(AccountTestInvoicingCommon):
+    @classmethod
+    def setUpClass(cls, chart_template_ref=None):
+        super(ReverseChargeCommon, cls).setUpClass(chart_template_ref)
+        cls.invoice_model = cls.env["account.move"].with_context(
             default_move_type="in_invoice"
         )
-        self.invoice_line_model = self.env["account.move.line"]
-        self.partner_model = self.env["res.partner"]
+        cls.invoice_line_model = cls.env["account.move.line"]
+        cls.partner_model = cls.env["res.partner"]
 
         cls._create_account()
         cls._create_taxes()
@@ -20,45 +22,45 @@ class ReverseChargeCommon(TransactionCase):
         cls.supplier_extraEU = cls.partner_model.create(
             {
                 "name": "Extra EU supplier",
-                "property_account_position_id": self.fiscal_position_extra.id,
+                "property_account_position_id": cls.fiscal_position_extra.id,
             }
         )
         cls.supplier_intraEU = cls.partner_model.create(
             {
                 "name": "Intra EU supplier",
-                "property_account_position_id": self.fiscal_position_intra.id,
+                "property_account_position_id": cls.fiscal_position_intra.id,
             }
         )
         cls.supplier_intraEU_exempt = cls.partner_model.create(
             {
                 "name": "Intra EU supplier exempt",
-                "property_account_position_id": self.fiscal_position_exempt.id,
+                "property_account_position_id": cls.fiscal_position_exempt.id,
             }
         )
-        # self.invoice_account = (
-        #     self.env["account.account"]
-        #     .search(
-        #         [
-        #             (
-        #                 "user_type_id",
-        #                 "=",
-        #                 self.env.ref("account.data_account_type_payable").id,
-        #             )
-        #         ],
-        #         limit=1,
-        #     )
-        # ).id
-        self.invoice_line_account = self.env["account.account"].search(
+        cls.invoice_account = (
+            cls.env["account.account"]
+            .search(
+                [
+                    (
+                        "user_type_id",
+                        "=",
+                        cls.env.ref("account.data_account_type_payable").id,
+                    )
+                ],
+                limit=1,
+            )
+        ).id
+        cls.invoice_line_account = cls.env["account.account"].search(
             [
                 (
                     "user_type_id",
                     "=",
-                    self.env.ref("account.data_account_type_expenses").id,
+                    cls.env.ref("account.data_account_type_expenses").id,
                 )
             ],
             limit=1,
         )
-        self.term_15_30 = self.env["account.payment.term"].create(
+        cls.term_15_30 = cls.env["account.payment.term"].create(
             {
                 "name": "15 30",
                 "line_ids": [
@@ -85,25 +87,9 @@ class ReverseChargeCommon(TransactionCase):
             }
         )
 
-    def create_invoice(self, partner, lines):
-        move_form = Form(self.invoice_model)
-        move_form.partner_id = partner
-        for line in lines:
-            with move_form.invoice_line_ids.new() as line_form:
-                line_form.name = line["name"]
-                line_form.product_id = line["product_id"]
-                line_form.price_unit = line["price_unit"]
-                line_form.account_id = line["account_id"]
-                # if line.get('tax_ids'):
-        return move_form.save()
-
     @classmethod
-    def create_invoice(cls, partner, amounts, taxes=None, post=True):
-        invoice = cls.init_invoice(
-            "in_invoice", partner=partner, post=post, amounts=amounts, taxes=taxes
-        )
-        for line in invoice.invoice_line_ids:
-            line.account_id = cls.invoice_line_account.id
+    def create_invoice(cls, partner, amounts):
+        invoice = cls.init_invoice('in_invoice', partner=partner, amounts=amounts)
         return invoice
 
     @classmethod
@@ -152,9 +138,10 @@ class ReverseChargeCommon(TransactionCase):
             {"name": "Tax 0%", "type_tax_use": "sale", "amount": 0}
         )
 
-    def _create_journals(self):
-        journal_model = self.env["account.journal"]
-        self.journal_selfinvoice = journal_model.create(
+    @classmethod
+    def _create_journals(cls):
+        journal_model = cls.env["account.journal"]
+        cls.journal_selfinvoice = journal_model.create(
             {"name": "selfinvoice", "type": "sale", "code": "SLF"}
         )
 
@@ -163,15 +150,15 @@ class ReverseChargeCommon(TransactionCase):
                 "name": "RC reconciliation",
                 "type": "bank",
                 "code": "SLFRC",
-                "default_account_id": self.account_selfinvoice.id,
+                "default_account_id": cls.account_selfinvoice.id,
             }
         )
 
-        self.journal_selfinvoice_extra = journal_model.create(
-            {"name": "Extra Selfinvoice", "type": "sale", "code": "SLFEX"}
+        cls.journal_selfinvoice_extra = journal_model.create(
+            {"name": "Extra selfinvoice", "type": "sale", "code": "SLFEX"}
         )
 
-        self.journal_cee_extra = journal_model.create(
+        cls.journal_cee_extra = journal_model.create(
             {"name": "Extra CEE", "type": "purchase", "code": "EXCEE"}
         )
 
