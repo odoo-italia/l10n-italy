@@ -10,8 +10,6 @@ from odoo.exceptions import UserError
 from odoo.tools import float_is_zero
 from odoo.tools.translate import _
 
-import odoo.addons.decimal_precision as dp
-
 
 class AccountVatPeriodEndStatement(models.Model):
     def _compute_authority_vat_amount(self):
@@ -141,7 +139,7 @@ class AccountVatPeriodEndStatement(models.Model):
             "paid": [("readonly", True)],
             "draft": [("readonly", False)],
         },
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     previous_year_credit = fields.Boolean("Previous year credits")
     previous_debit_vat_account_id = fields.Many2one(
@@ -161,7 +159,7 @@ class AccountVatPeriodEndStatement(models.Model):
             "paid": [("readonly", True)],
             "draft": [("readonly", False)],
         },
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     interests_debit_vat_account_id = fields.Many2one(
         "account.account",
@@ -180,7 +178,7 @@ class AccountVatPeriodEndStatement(models.Model):
             "paid": [("readonly", True)],
             "draft": [("readonly", False)],
         },
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     tax_credit_account_id = fields.Many2one(
         "account.account",
@@ -198,7 +196,7 @@ class AccountVatPeriodEndStatement(models.Model):
             "paid": [("readonly", True)],
             "draft": [("readonly", False)],
         },
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     advance_account_id = fields.Many2one(
         "account.account",
@@ -216,7 +214,7 @@ class AccountVatPeriodEndStatement(models.Model):
             "paid": [("readonly", True)],
             "draft": [("readonly", False)],
         },
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     generic_vat_account_line_ids = fields.One2many(
         "statement.generic.account.line",
@@ -249,13 +247,13 @@ class AccountVatPeriodEndStatement(models.Model):
     authority_vat_amount = fields.Float(
         "Authority VAT Amount",
         compute="_compute_authority_vat_amount",
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     # TODO is this field needed?
     deductible_vat_amount = fields.Float(
         "Deductible VAT Amount",
         compute="_compute_deductible_vat_amount",
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     journal_id = fields.Many2one(
         "account.journal",
@@ -311,7 +309,7 @@ class AccountVatPeriodEndStatement(models.Model):
         compute="_compute_residual",
         store=True,
         help="Remaining amount due.",
-        digits=dp.get_precision("Account"),
+        digits="Account",
     )
     payment_ids = fields.Many2many(
         "account.move.line", string="Payments", compute="_compute_lines", store=True
@@ -446,7 +444,7 @@ class AccountVatPeriodEndStatement(models.Model):
             if statement.payment_term_id:
                 due_list = statement.payment_term_id.compute(
                     statement.authority_vat_amount, statement_date
-                )[0]
+                )
                 for term in due_list:
                     current_line = end_debit_vat_data
                     current_line["credit"] = term[1]
@@ -772,7 +770,7 @@ class StatementDebitAccountLine(models.Model):
     account_id = fields.Many2one("account.account", "Account", required=True)
     tax_id = fields.Many2one("account.tax", "Tax", required=True)
     statement_id = fields.Many2one("account.vat.period.end.statement", "VAT statement")
-    amount = fields.Float("Amount", required=True, digits=dp.get_precision("Account"))
+    amount = fields.Float("Amount", required=True, digits="Account")
 
 
 class StatementCreditAccountLine(models.Model):
@@ -782,7 +780,7 @@ class StatementCreditAccountLine(models.Model):
     account_id = fields.Many2one("account.account", "Account", required=True)
     tax_id = fields.Many2one("account.tax", "Tax", required=True)
     statement_id = fields.Many2one("account.vat.period.end.statement", "VAT statement")
-    amount = fields.Float("Amount", required=True, digits=dp.get_precision("Account"))
+    amount = fields.Float("Amount", required=True, digits="Account")
 
 
 class StatementGenericAccountLine(models.Model):
@@ -791,7 +789,7 @@ class StatementGenericAccountLine(models.Model):
 
     account_id = fields.Many2one("account.account", "Account", required=True)
     statement_id = fields.Many2one("account.vat.period.end.statement", "VAT statement")
-    amount = fields.Float("Amount", required=True, digits=dp.get_precision("Account"))
+    amount = fields.Float("Amount", required=True, digits="Account")
     name = fields.Char("Description")
 
 

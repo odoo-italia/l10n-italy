@@ -255,6 +255,7 @@ class TestTax(TransactionCase):
             }
         )
         self.current_period.vat_statement_id = self.vat_statement
+        self.account_tax_22._compute_balance()
         self.vat_statement.compute_amounts()
         self.vat_statement.previous_credit_vat_account_id = self.received_vat_account
 
