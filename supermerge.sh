@@ -46,7 +46,6 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2139/h
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2140/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2141/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2149/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2151/head
 # merged # as #2210 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2153/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2156/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2157/head
