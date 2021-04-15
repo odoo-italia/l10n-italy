@@ -24,8 +24,8 @@ class TestDocType(TransactionCase):
         invoice2 = self.inv_model.create({"partner_id": self.partner3.id})
         self.assertEqual(invoice2.fiscal_document_type_id.id, self.TD01.id)
 
-    def test_doc_type_update(self):
-        """Check that document type is updated when updating invoice type."""
+    def test_doc_type_on_invoice_create(self):
+        """Check document type on invoice create based invoice type."""
         revenue_account_type = self.env.ref("account.data_account_type_revenue")
         revenue_account = self.env["account.account"].search(
             [("user_type_id", "=", revenue_account_type.id)], limit=1
