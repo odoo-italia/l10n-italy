@@ -1,7 +1,7 @@
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl).
 
 from odoo import _, api, fields, models
-from odoo.exceptions import Warning
+from odoo.exceptions import UserError
 
 
 class AccountMove(models.Model):
@@ -20,7 +20,7 @@ class AccountMove(models.Model):
             lang=self.partner_id.lang
         ).tax_stamp_product_id
         if not stamp_product_id:
-            raise Warning(_("Missing tax stamp product in company settings!"))
+            raise UserError(_("Missing tax stamp product in company settings!"))
         total_tax_base = sum(
             (
                 inv_tax.price_subtotal
@@ -55,21 +55,21 @@ class AccountMove(models.Model):
     def add_tax_stamp_line(self):
         for inv in self:
             if not inv.tax_stamp:
-                raise Warning(_("Tax stamp is not applicable"))
+                raise UserError(_("Tax stamp is not applicable"))
             stamp_product_id = self.env.company.with_context(
                 lang=inv.partner_id.lang
             ).tax_stamp_product_id
             if not stamp_product_id:
-                raise Warning(_("Missing tax stamp product in company settings!"))
+                raise UserError(_("Missing tax stamp product in company settings!"))
             for line in inv.invoice_line_ids:
                 if line.product_id and line.product_id.is_stamp:
-                    raise Warning(
+                    raise UserError(
                         _("Tax stamp line %s already present. Remove it first.")
                         % line.name
                     )
             stamp_account = stamp_product_id.property_account_income_id
             if not stamp_account:
-                raise Warning(
+                raise UserError(
                     _("Missing account income configuration for %s")
                     % stamp_product_id.name
                 )
@@ -106,7 +106,7 @@ class AccountMove(models.Model):
             not product.property_account_income_id
             or not product.property_account_expense_id
         ):
-            raise Warning(
+            raise UserError(
                 _("Product %s must have income and expense accounts") % product.name
             )
 
@@ -159,7 +159,7 @@ class AccountMove(models.Model):
                     lang=inv.partner_id.lang
                 ).tax_stamp_product_id
                 if not stamp_product_id:
-                    raise Warning(_("Missing tax stamp product in company settings!"))
+                    raise UserError(_("Missing tax stamp product in company settings!"))
                 income_vals, expense_vals = inv._build_tax_stamp_lines(stamp_product_id)
                 income_vals["move_id"] = inv.id
                 expense_vals["move_id"] = inv.id
