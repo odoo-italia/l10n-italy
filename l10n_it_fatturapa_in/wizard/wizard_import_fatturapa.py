@@ -1127,7 +1127,7 @@ class WizardImportFatturapa(models.TransientModel):
             if not arrotondamenti_tax_id:
                 self.log_inconsistency(_("Round up and down tax is not set"))
 
-            line_sequence = max(invoice.invoice_line_ids.mapped("sequence"))
+            line_sequence = max(invoice.invoice_line_ids.mapped("sequence"), default=1)
             line_vals = []
             for summary in FatturaBody.DatiBeniServizi.DatiRiepilogo:
                 # XXX fallisce cattivo se non trova l'imposta Arrotondamento
