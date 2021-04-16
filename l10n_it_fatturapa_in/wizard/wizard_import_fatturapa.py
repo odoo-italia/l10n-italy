@@ -1235,7 +1235,7 @@ class WizardImportFatturapa(models.TransientModel):
         wt_founds = []
         for Withholding in Withholdings:
             wts = self.env["withholding.tax"].search(
-                [("causale_pagamento_id.code", "=", Withholding.CausalePagamento)]
+                [("payment_reason_id.code", "=", Withholding.CausalePagamento)]
             )
             if not wts:
                 raise UserError(
