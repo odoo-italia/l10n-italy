@@ -34,7 +34,7 @@
                                 <field name="code" />
                                 <field name="cig" />
                                 <field name="cup" />
-                                <field name="invoice_id" invisible="1"/>
+                                <field name="invoice_id" invisible="1" />
                             </tree>
                         </field>
                     </group>
