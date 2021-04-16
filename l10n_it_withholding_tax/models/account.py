@@ -183,7 +183,9 @@ class AccountAbstractPayment(models.Model):
         Compute amount to pay proportionally to amount total - wt
         """
         rec = super(AccountAbstractPayment, self).default_get(fields)
-        invoice_defaults = self.new({"reconciled_invoice_ids": rec.get("reconciled_invoice_ids")}).reconciled_invoice_ids
+        invoice_defaults = self.new(
+            {"reconciled_invoice_ids": rec.get("reconciled_invoice_ids")}
+        ).reconciled_invoice_ids
 
         if invoice_defaults and len(invoice_defaults) == 1:
             invoice = invoice_defaults[0]
@@ -312,14 +314,20 @@ class AccountMove(models.Model):
             amount_net_pay_residual = invoice.amount_net_pay
             invoice.withholding_tax_amount = withholding_tax_amount
 
-            reconciled_lines = invoice.line_ids.filtered(lambda line: line.account_id.user_type_id.type in ('receivable', 'payable'))
-            reconciled_amls = reconciled_lines.mapped('matched_debit_ids.debit_move_id') + \
-                              reconciled_lines.mapped('matched_credit_ids.credit_move_id')
+            reconciled_lines = invoice.line_ids.filtered(
+                lambda line: line.account_id.user_type_id.type
+                in ("receivable", "payable")
+            )
+            reconciled_amls = reconciled_lines.mapped(
+                "matched_debit_ids.debit_move_id"
+            ) + reconciled_lines.mapped("matched_credit_ids.credit_move_id")
 
             for line in reconciled_amls:
                 if not line.withholding_tax_generated_by_move_id:
                     amount_net_pay_residual -= line.debit or line.credit
-            invoice.amount_net_pay_residual = float_round(amount_net_pay_residual, dp_obj.precision_get("Account"))
+            invoice.amount_net_pay_residual = float_round(
+                amount_net_pay_residual, dp_obj.precision_get("Account")
+            )
 
     withholding_tax = fields.Boolean("Withholding Tax")
     withholding_tax_line_ids = fields.One2many(

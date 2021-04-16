@@ -200,10 +200,10 @@ class TestWithholdingTax(TransactionCase):
         register_payments.action_post()
 
         # WT amount in payment move lines
-        payment_line_ids = self.invoice.line_ids.filtered(lambda l: l.account_id.internal_type in ['receivable', 'payable'])
-        self.assertTrue(
-            set(payment_line_ids.mapped("debit")) == {600, 150}
+        payment_line_ids = self.invoice.line_ids.filtered(
+            lambda l: l.account_id.internal_type in ["receivable", "payable"]
         )
+        self.assertTrue(set(payment_line_ids.mapped("debit")) == {600, 150})
 
         # WT aomunt applied in statement
         domain = [
