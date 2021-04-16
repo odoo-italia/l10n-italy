@@ -25,7 +25,7 @@ ITA - Causali pagamento per ritenute d'acconto
 
 |badge1| |badge2| |badge3| |badge4| |badge5| 
 
-Bridge module between l10n_it_withholding_tax and l10n_it_causali_pagamento
+Bridge module between l10n_it_withholding_tax and l10n_it_payment_reason
 
 **Table of contents**
 
