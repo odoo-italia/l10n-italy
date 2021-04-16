@@ -791,7 +791,7 @@ class TestFatturaPAEnasarco(FatturapaCommon):
                 "journal_id": misc_journal.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "enasarco",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.r").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.r").id,
                 "rate_ids": [
                     (
                         0,
@@ -813,7 +813,7 @@ class TestFatturaPAEnasarco(FatturapaCommon):
                 "journal_id": misc_journal.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "enasarco",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.r").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.r").id,
                 "rate_ids": [
                     (
                         0,
@@ -835,7 +835,7 @@ class TestFatturaPAEnasarco(FatturapaCommon):
                 "journal_id": misc_journal.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "ritenuta",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
                 "rate_ids": [
                     (
                         0,
@@ -857,7 +857,7 @@ class TestFatturaPAEnasarco(FatturapaCommon):
                 "journal_id": misc_journal.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "ritenuta",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.r").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.r").id,
                 "rate_ids": [
                     (
                         0,

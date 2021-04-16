@@ -15,7 +15,7 @@
     "license": "AGPL-3",
     "depends": [
         "l10n_it_fatturapa",
-        "l10n_it_withholding_tax_causali",
+        "l10n_it_withholding_tax_reason",
     ],
     "data": [
         "views/account_view.xml",
