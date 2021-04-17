@@ -1002,7 +1002,8 @@ class WizardImportFatturapa(models.TransientModel):
             self.set_roundings(FatturaBody, invoice)
 
         # compute the invoice
-        invoice._move_autocomplete_invoice_lines_values()
+        invoice.with_context(
+            check_move_validity=False)._move_autocomplete_invoice_lines_values()
 
         self.set_vendor_bill_data(FatturaBody, invoice)
 
