@@ -27,7 +27,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 20.0})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "causali_pagamento_id": self.env.ref("l10n_it_payment_reason.a").id,
             }
         )
 
@@ -42,7 +42,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 23.0, "base": 0.2})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
             }
         )
 
@@ -57,7 +57,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 23.0, "base": 0.5})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
             }
         )
 
@@ -72,7 +72,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 26.0, "base": 0.2})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -87,7 +87,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 26.0, "base": 0.4})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -102,7 +102,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 27.0, "base": 0.2})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -118,7 +118,7 @@ class FatturapaCommon(SingleTransactionCase):
                     "account.account_payment_term_immediate"
                 ).id,
                 "rate_ids": [(0, 0, {"tax": 4.0, "base": 1.0})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
