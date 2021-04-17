@@ -28,12 +28,12 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1959/h
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1974/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1975/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1984/head
-git pull --no-ff --no-edit --quiet -X theirs https://github.com/OCA/l10n-italy pull/1985/head
-git pull --no-ff --no-edit --quiet -X theirs https://github.com/OCA/l10n-italy pull/2154/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1985/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2154/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1987/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1988/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1989/head
-git pull --no-ff --no-edit --quiet -X theirs https://github.com/OCA/l10n-italy pull/1990/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1990/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2043/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2044/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2079/head
@@ -49,7 +49,7 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2149/h
 # merged # as #2210 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2153/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2156/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2157/head
-git pull --no-ff --no-edit --quiet -X ours https://github.com/OCA/l10n-italy pull/2166/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2195/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2198/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2199/head
