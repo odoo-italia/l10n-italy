@@ -103,7 +103,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         self.assertFalse(self.attach_model.file_name_exists("00001"))
         res = self.run_wizard(invoice.id)
@@ -176,7 +175,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -242,7 +240,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         self.AttachFileToInvoice(invoice.id, "test1.pdf")
         self.AttachFileToInvoice(invoice.id, "test2.pdf")
@@ -285,7 +282,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -338,7 +334,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -386,7 +381,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -440,7 +434,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -497,7 +490,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -546,7 +538,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -613,7 +604,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
             }
         )
 
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
@@ -666,7 +656,6 @@ class TestFatturaPAXMLValidation(FatturaPACommon):
                 ],
             }
         )
-        self.assertTrue(invoice.fiscal_document_type_id)
         invoice._post()
         res = self.run_wizard(invoice.id)
         attachment = self.attach_model.browse(res["res_id"])
