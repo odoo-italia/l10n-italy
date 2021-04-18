@@ -19,6 +19,12 @@ def migrate(env, version):
             ("causale.pagamento", "payment.reason"),
         ],
     )
+    openupgrade.rename_tables(
+        env.cr,
+        [
+            ("causale.pagamento", "payment.reason"),
+        ],
+    )
     openupgrade.rename_xmlids(
         env.cr,
         [
