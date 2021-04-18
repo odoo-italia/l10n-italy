@@ -26,6 +26,7 @@
                     <group
                             attrs="{'invisible': ['|',('electronic_invoice_subjected', '=', False), ('electronic_invoice_obliged_subject', '=', False)]}"
                         >
+                        <field name="is_pa" invisible="True" />
                         <field
                                 name="ipa_code"
                                 placeholder="IPA123"
