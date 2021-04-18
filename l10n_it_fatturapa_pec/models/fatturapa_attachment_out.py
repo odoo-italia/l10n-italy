@@ -35,7 +35,7 @@ class FatturaPAAttachmentOut(models.Model):
         ],
         string="State",
         default="ready",
-        track_visibility="onchange",
+        tracking=True,
     )
 
     last_sdi_response = fields.Text(
