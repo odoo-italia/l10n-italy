@@ -11,11 +11,11 @@ class POLine(models.Model):
     to_invoice = fields.Boolean("To Invoice", compute="_compute_to_invoice", store=True)
 
     @api.depends(
-        "invoice_lines.invoice_id.state",
+        "invoice_lines.move_id.state",
         "product_qty",
         "product_uom",
         "invoice_lines.quantity",
-        "invoice_lines.uom_id",
+        "invoice_lines.product_uom_id",
     )
     def _compute_to_invoice(self):
         precision = self.env["decimal.precision"].precision_get(
@@ -37,7 +37,6 @@ class POLine(models.Model):
             else:
                 line.to_invoice = False
 
-    @api.multi
     def name_get(self):
         res = []
         for line in self:
