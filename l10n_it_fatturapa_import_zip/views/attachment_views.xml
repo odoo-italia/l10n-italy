@@ -78,11 +78,10 @@
                                 <div>
                                     <field
                                         name="datas"
-                                        filename="datas_fname"
+                                        filename="name"
                                         attrs="{'readonly': [('state', '!=', 'draft')]}"
                                     />
                                 </div>
-                                <field name="datas_fname" invisible="1" />
                                 <field name="name" invisible="1" />
                             </group>
                         </group>
@@ -95,7 +94,6 @@
                 </sheet>
                 <div class="oe_chatter">
                     <field name="message_follower_ids" widget="mail_followers" />
-                    <field name="activity_ids" widget="mail_activity" />
                     <field name="message_ids" widget="mail_thread" />
                 </div>
             </form>
@@ -129,7 +127,6 @@
     <record id="action_fatturapa_attachment_import_zip" model="ir.actions.act_window">
         <field name="name">Import E-bill ZIP Files</field>
         <field name="res_model">fatturapa.attachment.import.zip</field>
-        <field name="view_type">form</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="fatturapa_attachment_import_zip_tree" />
     </record>

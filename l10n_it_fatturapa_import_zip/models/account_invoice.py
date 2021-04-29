@@ -2,7 +2,7 @@ from odoo import fields, models
 
 
 class Invoice(models.Model):
-    _inherit = "account.invoice"
+    _inherit = "account.move"
 
     attachment_out_import_zip_id = fields.Many2one(
         "fatturapa.attachment.import.zip",

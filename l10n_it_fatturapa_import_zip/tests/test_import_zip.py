@@ -44,13 +44,13 @@ class TestImportZIP(TransactionCase):
             order="sequence",
             limit=1,
         )
-        self.env.user.company_id.arrotondamenti_attivi_account_id = (
+        self.env.company.arrotondamenti_attivi_account_id = (
             arrotondamenti_attivi_account_id
         )
-        self.env.user.company_id.arrotondamenti_passivi_account_id = (
+        self.env.company.arrotondamenti_passivi_account_id = (
             arrotondamenti_passivi_account_id
         )
-        self.env.user.company_id.arrotondamenti_tax_id = arrotondamenti_tax_id
+        self.env.company.arrotondamenti_tax_id = arrotondamenti_tax_id
         account_payable = self.env["account.account"].create(
             {
                 "name": "Test WH tax",
@@ -73,9 +73,11 @@ class TestImportZIP(TransactionCase):
                 "code": "1040",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 20.0})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
             }
         )
         self.env["withholding.tax"].create(
@@ -86,7 +88,7 @@ class TestImportZIP(TransactionCase):
                 "account_payable_id": account_payable.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "enasarco",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.r").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.r").id,
                 "rate_ids": [
                     (
                         0,
@@ -107,7 +109,7 @@ class TestImportZIP(TransactionCase):
                 "account_payable_id": account_payable.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "enasarco",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.r").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.r").id,
                 "rate_ids": [
                     (
                         0,
@@ -128,7 +130,7 @@ class TestImportZIP(TransactionCase):
                 "account_payable_id": account_payable.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "ritenuta",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
                 "rate_ids": [
                     (
                         0,
@@ -149,7 +151,7 @@ class TestImportZIP(TransactionCase):
                 "account_payable_id": account_payable.id,
                 "payment_term": self.env.ref("account.account_payment_term_advance").id,
                 "wt_types": "ritenuta",
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.r").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.r").id,
                 "rate_ids": [
                     (
                         0,
@@ -169,9 +171,11 @@ class TestImportZIP(TransactionCase):
                 "code": "2320",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 23.0, "base": 0.2})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
             }
         )
 
@@ -181,9 +185,11 @@ class TestImportZIP(TransactionCase):
                 "code": "2320",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 23.0, "base": 0.5})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.a").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.a").id,
             }
         )
 
@@ -193,9 +199,11 @@ class TestImportZIP(TransactionCase):
                 "code": "2620q",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 26.0, "base": 0.2})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -205,9 +213,11 @@ class TestImportZIP(TransactionCase):
                 "code": "2640q",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 26.0, "base": 0.4})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -217,9 +227,11 @@ class TestImportZIP(TransactionCase):
                 "code": "2720q",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 27.0, "base": 0.2})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -230,9 +242,11 @@ class TestImportZIP(TransactionCase):
                 "wt_types": "enasarco",
                 "account_receivable_id": account_receivable.id,
                 "account_payable_id": account_payable.id,
-                "payment_term": self.env.ref("account.account_payment_term").id,
+                "payment_term": self.env.ref(
+                    "account.account_payment_term_immediate"
+                ).id,
                 "rate_ids": [(0, 0, {"tax": 4.0, "base": 1.0})],
-                "causale_pagamento_id": self.env.ref("l10n_it_causali_pagamento.q").id,
+                "payment_reason_id": self.env.ref("l10n_it_payment_reason.q").id,
             }
         )
 
@@ -258,7 +272,6 @@ class TestImportZIP(TransactionCase):
             {
                 "name": "xml_import.zip",
                 "datas": self.getFile("xml_import.zip")[1],
-                "datas_fname": "xml_import.zip",
             }
         )
         attachment.action_import()

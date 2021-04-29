@@ -3,23 +3,20 @@
 
 {
     "name": "ITA - Fattura elettronica - Import ZIP",
-    "description": (
-        "Allow to massively import XML e-invoices, in and out, through a ZIP file.\n"
-        "This is typically used while starting to use the system, to import invoices"
-        " from previous software."
-    ),
-    "version": "12.0.1.0.0",
+    "version": "14.0.1.0.0",
     "category": "Localization/Italy",
     "website": "https://github.com/OCA/l10n-italy",
-    "author": "TAKOBI",
+    "author": "TAKOBI, Odoo Community Association (OCA)",
     "license": "AGPL-3",
     "application": False,
     "installable": True,
     "depends": [
         "l10n_it_account",
+        "l10n_it_fiscal_document_type",
         "l10n_it_fatturapa_out",
         "l10n_it_fatturapa_in",
         "l10n_it_fatturapa_pec",
+        "l10n_it_withholding_tax_reason",
     ],
     "data": [
         "views/account_invoice_views.xml",
