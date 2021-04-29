@@ -4,8 +4,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
-import odoo.addons.decimal_precision as dp
-
 from .intrastat_statement import format_9, format_x
 
 
@@ -20,7 +18,7 @@ class IntrastatStatementSaleSection(models.AbstractModel):
 
     @api.model
     def _default_transaction_nature_id(self):
-        company_id = self.env.context.get("company_id", self.env.user.company_id)
+        company_id = self.env.context.get("company_id", self.env.company)
         return company_id.intrastat_sale_transaction_nature_id
 
 
@@ -46,9 +44,7 @@ class IntrastatStatementSaleSection1(models.Model):
         readonly=True,
         related="intrastat_code_id.additional_unit_uom_id.name",
     )
-    statistic_amount_euro = fields.Integer(
-        string="Statistic Value in Euro", digits=dp.get_precision("Account")
-    )
+    statistic_amount_euro = fields.Integer(string="Statistic Value in Euro")
     delivery_code_id = fields.Many2one(
         comodel_name="account.incoterms", string="Delivery Terms"
     )
@@ -66,7 +62,6 @@ class IntrastatStatementSaleSection1(models.Model):
     def get_section_number(self):
         return 1
 
-    @api.multi
     def apply_partner_data(self, partner_data):
         res = super(IntrastatStatementSaleSection1, self).apply_partner_data(
             partner_data
@@ -85,7 +80,7 @@ class IntrastatStatementSaleSection1(models.Model):
         res = super(IntrastatStatementSaleSection1, self)._prepare_statement_line(
             inv_intra_line, statement_id
         )
-        company_id = self.env.user.company_id
+        company_id = self.env.company
 
         # Company defaults
         delivery_code_id = (
@@ -117,11 +112,14 @@ class IntrastatStatementSaleSection1(models.Model):
             dp_model.precision_get("Account"),
         )
 
+        # check if additional_units has a value
+        has_additional_units = bool(inv_intra_line.additional_units)
         res.update(
             {
                 "transaction_nature_id": transaction_nature_id.id,
                 "weight_kg": round(inv_intra_line.weight_kg) or 1,
-                "additional_units": round(inv_intra_line.additional_units) or 1,
+                "additional_units": round(inv_intra_line.additional_units)
+                or (0 if not has_additional_units else 1),
                 "statistic_amount_euro": statistic_amount,
                 "delivery_code_id": delivery_code_id.id,
                 "transport_code_id": transport_code_id.id,
@@ -186,9 +184,7 @@ class IntrastatStatementSaleSection2(models.Model):
         string="Transaction Nature",
         default=lambda m: m._default_transaction_nature_id(),
     )
-    statistic_amount_euro = fields.Integer(
-        string="Statistic Value in Euro", digits=dp.get_precision("Account")
-    )
+    statistic_amount_euro = fields.Integer(string="Statistic Value in Euro")
 
     @api.model
     def get_section_number(self):
@@ -199,7 +195,7 @@ class IntrastatStatementSaleSection2(models.Model):
         res = super(IntrastatStatementSaleSection2, self)._prepare_statement_line(
             inv_intra_line, statement_id
         )
-        company_id = self._context.get("company_id", self.env.user.company_id)
+        company_id = self._context.get("company_id", self.env.company)
 
         # Company defaults
         transaction_nature_id = (
@@ -224,7 +220,7 @@ class IntrastatStatementSaleSection2(models.Model):
 
         # Sign variation
         sign_variation = False
-        if inv_intra_line.invoice_id.type == "out_refund":
+        if inv_intra_line.invoice_id.move_type == "out_refund":
             sign_variation = "-"
         res.update(
             {
@@ -238,7 +234,6 @@ class IntrastatStatementSaleSection2(models.Model):
         )
         return res
 
-    @api.multi
     def _export_line_checks(self, section_label, section_number):
         super(IntrastatStatementSaleSection2, self)._export_line_checks(
             section_label, section_number
@@ -291,7 +286,6 @@ class IntrastatStatementSaleSection2(models.Model):
         rcd += "\r\n"
         return rcd
 
-    @api.multi
     def get_amount_euro(self):
         amount = 0
         for section in self:
@@ -427,7 +421,6 @@ class IntrastatStatementSaleSection4(models.Model):
         )
         return res
 
-    @api.multi
     def _export_line_checks(self, section_label, section_number):
         super(IntrastatStatementSaleSection4, self)._export_line_checks(
             section_label, section_number
