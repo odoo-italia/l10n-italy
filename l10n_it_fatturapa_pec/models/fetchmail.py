@@ -109,17 +109,17 @@ class Fetchmail(models.Model):
                 MailThread = self.env["mail.thread"]
                 _logger.info(
                     "start checking for new e-invoices on %s server %s",
-                    server.type,
+                    server.server_type,
                     server.name,
                 )
                 additional_context["fetchmail_server_id"] = server.id
-                additional_context["server_type"] = server.type
+                additional_context["server_type"] = server.server_type
                 error_messages = list()
-                if server.type == "imap":
+                if server.server_type == "imap":
                     self.fetch_mail_server_type_imap(
                         server, MailThread, error_messages, **additional_context
                     )
-                elif server.type == "pop":
+                elif server.server_type == "pop":
                     self.fetch_mail_server_type_pop(
                         server, MailThread, error_messages, **additional_context
                     )
@@ -147,7 +147,7 @@ class Fetchmail(models.Model):
         _logger.info(
             "Failure when fetching emails "
             "using {serv_type} server {serv_name}.".format(
-                serv_type=self.type, serv_name=self.name
+                serv_type=self.server_type, serv_name=self.name
             ),
             exc_info=True,
         )

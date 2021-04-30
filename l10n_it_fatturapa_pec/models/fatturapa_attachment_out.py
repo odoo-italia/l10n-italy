@@ -68,7 +68,7 @@ class FatturaPAAttachmentOut(models.Model):
         if set(states) != {"ready"}:
             raise UserError(_("You can only send files in 'Ready to Send' state."))
         for att in self:
-            if not att.datas or not att.datas_fname:
+            if not att.datas or not att.name:
                 raise UserError(_("File content and file name are mandatory"))
             mail_message = self.env["mail.message"].create(
                 {
@@ -108,9 +108,7 @@ class FatturaPAAttachmentOut(models.Model):
                     att.state = "sender_error"
                     mail.body = str(e)
 
-    def _message_type_ns(
-        self, root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
-    ):
+    def _message_type_ns(self, root, id_sdi, message_id, receipt_dt):
         error_list = root.find("ListaErrori")
         error_str = ""
         for error in error_list:
@@ -123,7 +121,7 @@ class FatturaPAAttachmentOut(models.Model):
                 if error.find("Suggerimento") is not None
                 else "",
             )
-        fatturapa_attachment_out.write(
+        self.write(
             {
                 "state": "sender_error",
                 "last_sdi_response": "SdI ID: {}; "
@@ -132,11 +130,9 @@ class FatturaPAAttachmentOut(models.Model):
             }
         )
 
-    def _message_type_mc(
-        self, root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
-    ):
+    def _message_type_mc(self, root, id_sdi, message_id, receipt_dt):
         missed_delivery_note = root.find("Descrizione").text
-        fatturapa_attachment_out.write(
+        self.write(
             {
                 "state": "recipient_error",
                 "last_sdi_response": "SdI ID: {}; "
@@ -147,11 +143,9 @@ class FatturaPAAttachmentOut(models.Model):
             }
         )
 
-    def _message_type_rc(
-        self, root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
-    ):
+    def _message_type_rc(self, root, id_sdi, message_id, receipt_dt):
         delivery_dt = root.find("DataOraConsegna").text
-        fatturapa_attachment_out.write(
+        self.write(
             {
                 "state": "validated",
                 "delivered_date": fields.Datetime.now(),
@@ -161,7 +155,7 @@ class FatturaPAAttachmentOut(models.Model):
             }
         )
 
-    def _message_type_ne(self, root, fatturapa_attachment_out, id_sdi, message_id):
+    def _message_type_ne(self, root, id_sdi, message_id):
         esito_committente = root.find("EsitoCommittente")
         if esito_committente is not None:
             # more than one esito?
@@ -171,7 +165,7 @@ class FatturaPAAttachmentOut(models.Model):
                     state = "accepted"
                 elif esito.text == "EC02":
                     state = "rejected"
-                fatturapa_attachment_out.write(
+                self.write(
                     {
                         "state": state,
                         "last_sdi_response": "SdI ID: {}; "
@@ -181,12 +175,10 @@ class FatturaPAAttachmentOut(models.Model):
                     }
                 )
 
-    def _message_type_dt(
-        self, root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
-    ):
+    def _message_type_dt(self, root, id_sdi, message_id, receipt_dt):
         description = root.find("Descrizione")
         if description is not None:
-            fatturapa_attachment_out.write(
+            self.write(
                 {
                     "state": "validated",
                     "last_sdi_response": "SdI ID: {}; "
@@ -197,12 +189,10 @@ class FatturaPAAttachmentOut(models.Model):
                 }
             )
 
-    def _message_type_at(
-        self, root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
-    ):
+    def _message_type_at(self, root, id_sdi, message_id, receipt_dt):
         description = root.find("Descrizione")
         if description is not None:
-            fatturapa_attachment_out.write(
+            self.write(
                 {
                     "state": "accepted",
                     "last_sdi_response": (
@@ -258,29 +248,27 @@ class FatturaPAAttachmentOut(models.Model):
                 receipt_dt = receipt_dt.text if receipt_dt is not None else False
                 message_id = message_id.text if message_id is not None else False
                 if message_type == "NS":  # 2A. Notifica di Scarto
-                    attachment._message_type_ns(
-                        root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
+                    fatturapa_attachment_out._message_type_ns(
+                        root, id_sdi, message_id, receipt_dt
                     )
                 elif message_type == "MC":  # 3A. Mancata consegna
-                    attachment._message_type_mc(
-                        root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
+                    fatturapa_attachment_out._message_type_mc(
+                        root, id_sdi, message_id, receipt_dt
                     )
                 elif message_type == "RC":  # 3B. Ricevuta di Consegna
-                    attachment._message_type_rc(
-                        root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
+                    fatturapa_attachment_out._message_type_rc(
+                        root, id_sdi, message_id, receipt_dt
                     )
                 elif message_type == "NE":  # 4A. Notifica Esito per PA
-                    attachment._message_type_ne(
-                        root, fatturapa_attachment_out, id_sdi, message_id
-                    )
+                    fatturapa_attachment_out._message_type_ne(root, id_sdi, message_id)
                 elif message_type == "DT":  # 5. Decorrenza Termini per PA
-                    attachment._message_type_dt(
-                        root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
+                    fatturapa_attachment_out._message_type_dt(
+                        root, id_sdi, message_id, receipt_dt
                     )
                 # not implemented - todo
                 elif message_type == "AT":  # 6. Avvenuta Trasmissione per PA
-                    attachment._message_type_at(
-                        root, fatturapa_attachment_out, id_sdi, message_id, receipt_dt
+                    fatturapa_attachment_out._message_type_at(
+                        root, id_sdi, message_id, receipt_dt
                     )
 
                 message_dict["res_id"] = fatturapa_attachment_out.id

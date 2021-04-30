@@ -77,7 +77,7 @@ class TestEInvoiceSend(EInvoiceCommon):
     def test_resend_after_regenerate(self):
         """Re-sending e-invoice raises UserError"""
         invoice = self._create_invoice()
-        invoice.action_invoice_open()
+        invoice.action_post()
 
         wizard = self._get_export_wizard(invoice)
         action = wizard.exportFatturaPA()

@@ -7,6 +7,8 @@ import logging
 from odoo import _, models
 from odoo.exceptions import ValidationError
 
+from odoo.addons.l10n_it_fatturapa_out.wizard.efattura import EFatturaOut
+
 _logger = logging.getLogger(__name__)
 
 
@@ -25,23 +27,23 @@ class WizardExportFatturapa(models.TransientModel):
         invoice_obj = self.env["account.move"]
         attachments = self.env["fatturapa.attachment.out"]
         # Browse active invoice
-        active_id = invoice_obj.browse(self._context.get("active_id"))
+        active_invoice = invoice_obj.browse(self._context.get("active_id"))
 
-        if not active_id:
+        if not active_invoice:
             raise ValidationError(_("The method can be called with a valid active_id"))
 
         # Search all the invoices belonging the same xml file
-        invoice_ids = invoice_obj.search(
+        invoices = invoice_obj.search(
             [
                 (
                     "fatturapa_attachment_out_id",
                     "=",
-                    active_id.fatturapa_attachment_out_id.id,
+                    active_invoice.fatturapa_attachment_out_id.id,
                 )
             ]
-        ).ids
+        )
 
-        attach = active_id.fatturapa_attachment_out_id
+        attach = active_invoice.fatturapa_attachment_out_id
         if not attach:
             raise ValidationError(
                 _(
@@ -50,16 +52,14 @@ class WizardExportFatturapa(models.TransientModel):
                 )
             )
 
-        partner = active_id.partner_id
-        company = self.env.company
+        partner = active_invoice.partner_id
         context_partner = self.env.context.copy()
         context_partner.update({"lang": partner.lang})
 
-        fatturapa, number = self.exportInvoiceXML(
-            company, partner, invoice_ids, attach=attach, context=context_partner
-        )
-
-        self.updateAttachment(attach, fatturapa)
+        progressivo_invio = attach.name.split("_")[1].split(".")[0]
+        for invoice in invoices:
+            fatturapa = EFatturaOut(self, partner, invoice, progressivo_invio)
+            self.updateAttachment(attach, fatturapa)
 
         attachments += attach
 
