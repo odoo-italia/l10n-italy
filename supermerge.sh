@@ -50,7 +50,6 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2151/h
 # merged # as #2210 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2153/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2156/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2157/head
-# closed, see #2258 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2195/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2198/head
 # closed, see #2230 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2199/head
@@ -67,5 +66,9 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2229/h
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2238/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2246/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2248/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2258/head
+#git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2258/head
+# closed, see #2258 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2259/head
+git pull --no-ff --no-edit --quiet https://github.com/OmniaGit/l10n-italy 14.0-mig-l10n_it_location_nuts
+
