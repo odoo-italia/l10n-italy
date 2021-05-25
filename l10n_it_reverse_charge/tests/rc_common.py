@@ -1,4 +1,5 @@
 from odoo.tests.common import Form, TransactionCase
+
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
@@ -38,8 +39,7 @@ class ReverseChargeCommon(AccountTestInvoicingCommon):
             }
         )
         cls.invoice_account = (
-            cls.env["account.account"]
-            .search(
+            cls.env["account.account"].search(
                 [
                     (
                         "user_type_id",
@@ -89,7 +89,9 @@ class ReverseChargeCommon(AccountTestInvoicingCommon):
 
     @classmethod
     def create_invoice(cls, partner, amounts=[], taxes=None, post=True):
-        invoice = cls.init_invoice('in_invoice', partner=partner, post=post, amounts=amounts, taxes=taxes)
+        invoice = cls.init_invoice(
+            "in_invoice", partner=partner, post=post, amounts=amounts, taxes=taxes
+        )
         for line in invoice.invoice_line_ids:
             line.account_id = cls.invoice_line_account.id
         return invoice
