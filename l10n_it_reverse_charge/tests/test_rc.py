@@ -10,7 +10,7 @@ from .rc_common import ReverseChargeCommon
 
 class TestReverseCharge(ReverseChargeCommon):
     def test_intra_EU_invoice_line_no_tax(self):
-        invoice = self.create_invoice(self.supplier_intraEU, post=False)
+        invoice = self.create_invoice(self.supplier_intraEU, [], post=False)
         move_line_model = self.env["account.move.line"]
         move_line_model.create(
             {

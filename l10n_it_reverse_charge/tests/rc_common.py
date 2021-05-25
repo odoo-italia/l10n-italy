@@ -1,5 +1,3 @@
-from odoo.tests.common import Form, TransactionCase
-
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
@@ -88,7 +86,7 @@ class ReverseChargeCommon(AccountTestInvoicingCommon):
         )
 
     @classmethod
-    def create_invoice(cls, partner, amounts=[], taxes=None, post=True):
+    def create_invoice(cls, partner, amounts, taxes=None, post=True):
         invoice = cls.init_invoice(
             "in_invoice", partner=partner, post=post, amounts=amounts, taxes=taxes
         )
