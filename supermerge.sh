@@ -28,10 +28,10 @@ git pull --no-ff --no-edit --quiet https://github.com/odoo-italia/l10n-italy 14.
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1974/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1975/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1984/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1985/head
+# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1985/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2154/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1987/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1988/head
+# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1988/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1989/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1990/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2043/head
@@ -66,9 +66,8 @@ git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2229/h
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2238/head
 # merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2246/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2248/head
-#git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2258/head
+git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2258/head
 # closed, see #2258 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2259/head
 git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2278/head
 git pull --no-ff --no-edit --quiet https://github.com/OmniaGit/l10n-italy 14.0-mig-l10n_it_location_nuts
