@@ -19,7 +19,7 @@ class AccountMoveLine(models.Model):
 
     rc = fields.Boolean("RC")
 
-    @api.onchange('tax_ids')
+    @api.onchange("tax_ids")
     def onchange_rc_tax_ids(self):
         self._set_rc_flag(self.move_id)
 
@@ -82,7 +82,12 @@ class AccountMove(models.Model):
             "Reference: %s\n"
             "Date: %s\n"
             "Internal reference: %s"
-        ) % (self.partner_id.display_name, self.ref or "", self.date, self.sequence_number)
+        ) % (
+            self.partner_id.display_name,
+            self.ref or "",
+            self.date,
+            self.sequence_number,
+        )
         return {
             "partner_id": partner.id,
             "move_type": move_type,
@@ -96,7 +101,7 @@ class AccountMove(models.Model):
             "currency_id": currency.id,
             "fiscal_position_id": False,
             "invoice_payment_term_id": False,
-            "narration": narration
+            "narration": narration,
         }
 
     def get_inv_line_to_reconcile(self):
@@ -179,8 +184,8 @@ class AccountMove(models.Model):
         rc_type = self.fiscal_position_id.rc_type_id
         payment_reg = (
             self.env["account.payment.register"]
-                .with_context(active_model="account.move", active_ids=self.ids)
-                .create(
+            .with_context(active_model="account.move", active_ids=self.ids)
+            .create(
                 {
                     "payment_date": self.date,
                     "amount": self.amount_total,
@@ -198,8 +203,8 @@ class AccountMove(models.Model):
         amount = self.get_tax_amount_added_for_rc()
         payment_reg = (
             self.env["account.payment.register"]
-                .with_context(active_model="account.move", active_ids=self.ids)
-                .create(
+            .with_context(active_model="account.move", active_ids=self.ids)
+            .create(
                 {
                     "payment_date": self.date,
                     "amount": amount,
@@ -215,14 +220,18 @@ class AccountMove(models.Model):
     def reconcile_rc_invoice(self):
         rc_type = self.fiscal_position_id.rc_type_id
         rc_invoice = self.rc_self_invoice_id
-        payment_reg = self.env["account.payment.register"]\
-            .with_context(active_model="account.move", active_ids=rc_invoice.ids)\
-            .create({
-                "payment_date": rc_invoice.date,
-                "amount": rc_invoice.amount_total,
-                "journal_id": rc_type.payment_journal_id.id,
-                "currency_id": rc_invoice.currency_id.id
-            })
+        payment_reg = (
+            self.env["account.payment.register"]
+            .with_context(active_model="account.move", active_ids=rc_invoice.ids)
+            .create(
+                {
+                    "payment_date": rc_invoice.date,
+                    "amount": rc_invoice.amount_total,
+                    "journal_id": rc_type.payment_journal_id.id,
+                    "currency_id": rc_invoice.currency_id.id,
+                }
+            )
+        )
         rc_invoice.payment_id = payment_reg._create_payments()
 
         return True
@@ -272,7 +281,9 @@ class AccountMove(models.Model):
             if self.rc_self_invoice_id:
                 # this is needed when user takes back to draft supplier
                 # invoice, edit and validate again
-                rc_invoice = self.with_context(check_move_validity=False).rc_self_invoice_id
+                rc_invoice = self.with_context(
+                    check_move_validity=False
+                ).rc_self_invoice_id
                 for line in rc_invoice.line_ids:
                     line.remove_move_reconcile()
                 rc_invoice.invoice_line_ids.unlink()
