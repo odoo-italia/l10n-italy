@@ -16,7 +16,7 @@ class SaleOrder(models.Model):
     )
 
     def _create_invoices(self, grouped=False, final=False, date=None):
-        moves = super()._create_invoices(grouped, final, date)
+        moves = super()._create_invoices(grouped=grouped, final=final, date=date)
 
         # To each invoice, link the documents of the related order
         # only if the order is in `self`
