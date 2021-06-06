@@ -6,6 +6,23 @@
 # contemporaneamente dai vari moduli, in pratica sono .pre-commit-config.yaml e
 # requirements.txt. Una volta risolti i conflitti potete rilanciare lo script.
 
+function rebase_n_merge()
+{
+	repo="$1"
+	rbranch="$2"
+	lbranch="$3"
+	git fetch "$repo" "+${rbranch}:${lbranch}"
+	git rebase 14.0-supermerge "${lbranch}"
+	git checkout 14.0-supermerge
+	git merge --no-edit --no-ff "${lbranch}"
+}
+
+function rebase_n_merge_pr()
+{
+	pr="$1"
+	rebase_n_merge https://github.com/OCA/l10n-italy "pull/${pr}/head" "pr-${pr}"
+}
+
 # clone iniziale
 if [ ! -x l10n-italy -a ! -x .git ]; then
 	git clone --single-branch --branch 14.0 https://github.com/OCA/l10n-italy 
@@ -14,61 +31,27 @@ fi
 [ -x l10n-italy ] && cd l10n-italy
 
 set -xe
-git pull --no-ff --no-edit --quiet https://github.com/odoo-italia/l10n-italy 14.0-premerge
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1929/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1930/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1931/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1938/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1939/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1942/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/fredzamoabg/l10n-italy pull/5/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1950/head
-# closed, see #2234 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1959/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1973/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1974/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1975/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1984/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1985/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2154/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1987/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1988/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1989/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/1990/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2043/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2044/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2079/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2077/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2080/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2128/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/TheMule71/l10n-italy 14.0-mig-l10n_it_reverse_charge
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2138/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2139/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2140/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2141/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2149/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2151/head
-# merged # as #2210 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2153/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2156/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2157/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2195/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2198/head
-# closed, see #2230 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2199/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2202/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2203/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2205/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2212/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2220/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2225/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2228/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2229/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2230/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2234/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2238/head
-# merged # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2246/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2248/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2258/head
-# closed, see #2258 # git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2166/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2259/head
-git pull --no-ff --no-edit --quiet https://github.com/OCA/l10n-italy pull/2278/head
-git pull --no-ff --no-edit --quiet https://github.com/OmniaGit/l10n-italy 14.0-mig-l10n_it_location_nuts
-
+rebase_n_merge https://github.com/odoo-italia/l10n-italy 14.0-premerge 14.0-premerge
+rebase_n_merge_pr 2154
+rebase_n_merge_pr 1989
+rebase_n_merge_pr 1990
+rebase_n_merge_pr 2043
+rebase_n_merge_pr 2080
+rebase_n_merge_pr 2128
+rebase_n_merge_pr 2138
+rebase_n_merge_pr 2139
+rebase_n_merge_pr 2149
+rebase_n_merge_pr 2151
+rebase_n_merge_pr 2157
+rebase_n_merge_pr 2198
+rebase_n_merge_pr 2202
+rebase_n_merge_pr 2203
+rebase_n_merge_pr 2212
+rebase_n_merge_pr 2228
+rebase_n_merge_pr 2229
+rebase_n_merge_pr 2238
+rebase_n_merge_pr 2248
+rebase_n_merge_pr 2258
+rebase_n_merge_pr 2259
+rebase_n_merge_pr 2278
+rebase_n_merge https://github.com/OmniaGit/l10n-italy 14.0-mig-l10n_it_location_nuts 14.0-mig-l10n_it_location_nuts
