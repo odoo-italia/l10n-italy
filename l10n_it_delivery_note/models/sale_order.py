@@ -113,7 +113,7 @@ class SaleOrder(models.Model):
         invoices.update_delivery_note_lines()
 
     def _create_invoices(self, grouped=False, final=False):
-        invoice_ids = super()._create_invoices(grouped=grouped, final=final)
+        invoice_ids = super(SaleOrder, self)._create_invoices(grouped=grouped, final=final)
 
         self._assign_delivery_notes_invoices(invoice_ids.ids)
         self._generate_delivery_note_lines(invoice_ids.ids)

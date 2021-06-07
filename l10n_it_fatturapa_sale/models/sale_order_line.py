@@ -20,9 +20,9 @@ class SaleOrderLine(models.Model):
         groups="account.group_account_user",
     )
 
-    def _prepare_invoice_line(self, qty):
+    def _prepare_invoice_line(self, **optional_values):
         self.ensure_one()
-        invoice_line_vals = super()._prepare_invoice_line(qty)
+        invoice_line_vals = super(SaleOrderLine, self)._prepare_invoice_line(**optional_values)
         sale_line_documents = self.related_documents
         if sale_line_documents:
             invoice_line_documents = invoice_line_vals.get("related_documents", list())
@@ -56,6 +56,6 @@ class SaleOrderLine(models.Model):
 
     def unlink(self):
         related_documents = self.mapped("related_documents")
-        res = super().unlink()
+        res = super(SaleOrderLine, self).unlink()
         related_documents.check_unlink().unlink()
         return res
