@@ -290,7 +290,7 @@ class AccountInvoiceLine(models.Model):
 
 class FaturapaSummaryData(models.Model):
     # _position = ['2.2.2']
-    _name = "faturapa.summary.data"
+    _name = "fatturapa.summary.data"
     _description = "E-invoice summary data"
     tax_rate = fields.Float("Tax Rate")
     non_taxable_nature = fields.Selection(
