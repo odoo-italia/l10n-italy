@@ -288,9 +288,41 @@ class AccountInvoiceLine(models.Model):
     ftpa_line_number = fields.Integer("Line Number", readonly=True, copy=False)
 
 
-class FaturapaSummaryData(models.Model):
+class FatturapaSummaryData(models.Model):
     # _position = ['2.2.2']
     _name = "fatturapa.summary.data"
+    _description = "E-invoice summary data"
+    tax_rate = fields.Float("Tax Rate")
+
+    @api.model
+    def _get_tax_kinds(self):
+        return [(t.code, t.name) for t in self.env["account.tax.kind"].search([])]
+
+    non_taxable_nature = fields.Selection(
+        selection="_get_tax_kinds",
+        string="Non taxable nature",
+    )
+    incidental_charges = fields.Float("Incidental Charges")
+    rounding = fields.Float("Rounding")
+    amount_untaxed = fields.Float("Amount Untaxed")
+    amount_tax = fields.Float("Amount Tax")
+    payability = fields.Selection(
+        [
+            ("I", "Immediate payability"),
+            ("D", "Deferred payability"),
+            ("S", "Split payment"),
+        ],
+        string="VAT payability",
+    )
+    law_reference = fields.Char("Law reference", size=128)
+    invoice_id = fields.Many2one(
+        "account.move", "Related Invoice", ondelete="cascade", index=True
+    )
+
+
+class FaturapaSummaryData(models.Model):
+    # _position = ['2.2.2']
+    _name = "faturapa.summary.data"
     _description = "E-invoice summary data"
     tax_rate = fields.Float("Tax Rate")
     non_taxable_nature = fields.Selection(
@@ -439,15 +471,15 @@ class AccountInvoice(models.Model):
     efatt_stabile_organizzazione_indirizzo = fields.Char(
         string="Organization Address",
         help="The fields must be entered only when the seller/provider is "
-        "non-resident, with a stable organization in Italy. Address of "
-        "the stable organization in Italy (street name, square, etc.)",
+             "non-resident, with a stable organization in Italy. Address of "
+             "the stable organization in Italy (street name, square, etc.)",
         readonly=True,
         copy=False,
     )
     efatt_stabile_organizzazione_civico = fields.Char(
         string="Organization Street Number",
         help="Street number of the address (no need to specify if already "
-        "present in the address field)",
+             "present in the address field)",
         readonly=True,
         copy=False,
     )
@@ -463,9 +495,9 @@ class AccountInvoice(models.Model):
     efatt_stabile_organizzazione_provincia = fields.Char(
         string="Organization Province",
         help="Acronym of the Province to which the municipality indicated "
-        "in the information element 1.2.3.4 <Comune> belongs. "
-        "Must be filled if the information element 1.2.3.6 <Nazione> is "
-        "equal to IT",
+             "in the information element 1.2.3.4 <Comune> belongs. "
+             "Must be filled if the information element 1.2.3.6 <Nazione> is "
+             "equal to IT",
         readonly=True,
         copy=False,
     )
@@ -480,17 +512,17 @@ class AccountInvoice(models.Model):
         "Rounding",
         readonly=True,
         help="Possible total amount rounding on the document (negative sign "
-        "allowed)",
+             "allowed)",
         copy=False,
     )
     art73 = fields.Boolean(
         "Art. 73",
         readonly=True,
         help="Indicates whether the document has been issued according to "
-        "methods and terms laid down in a ministerial decree under the "
-        "terms of Article 73 of Italian Presidential Decree 633/72 (this "
-        "enables the seller/provider to issue in the same year several "
-        "documents with same number)",
+             "methods and terms laid down in a ministerial decree under the "
+             "terms of Article 73 of Italian Presidential Decree 633/72 (this "
+             "enables the seller/provider to issue in the same year several "
+             "documents with same number)",
         copy=False,
     )
     electronic_invoice_subjected = fields.Boolean(
