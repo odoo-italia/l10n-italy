@@ -172,7 +172,7 @@ e 'line' per riga di fattura (a seconda del livello in cui sono chiamati)
                     t-call="l10n_it_fatturapa_out.account_invoice_line_it_sconto_maggiorazione"
                 />
                 <PrezzoTotale t-esc="format_monetary(line.price_subtotal, currency)" />
-                <AliquotaIVA t-if="is_note" t-esc="get_default_note_tax(record)" />
+                <AliquotaIVA t-if="is_note">0.00</AliquotaIVA>
                 <AliquotaIVA
                     t-if="not is_note"
                     t-esc="format_numbers(tax_ids.amount)"
