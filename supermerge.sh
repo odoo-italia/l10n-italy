@@ -62,5 +62,6 @@ rebase_n_merge_pr 2248
 rebase_n_merge_pr 2258
 rebase_n_merge_pr 2259
 rebase_n_merge_pr 2278
+rebase_n_merge_pr 2315
 rebase_n_merge_pr 2337
 rebase_n_merge https://github.com/OmniaGit/l10n-italy 14.0-mig-l10n_it_location_nuts 14.0-mig-l10n_it_location_nuts
