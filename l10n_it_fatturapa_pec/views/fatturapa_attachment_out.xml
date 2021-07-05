@@ -10,7 +10,6 @@
                 <header>
                     <button name="send_via_pec" states="ready" string="Send Via PEC" type="object" class="oe_highlight"/>
                     <button name="reset_to_ready" states="sender_error" string="Reset to ready" type="object" />
-                    <field name="state" widget="statusbar"/>
                 </header>
             </xpath>
             <xpath expr="//div/group[last()]" position="after">
