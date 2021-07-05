@@ -13,8 +13,9 @@
                     groups="account.group_account_invoice"
                 >
                 <group name="fatturapa_group">
-                    <label for="electronic_invoice_no_contact_update" />
-                    <field name="electronic_invoice_no_contact_update" />
+                    <group>
+                        <field name="electronic_invoice_no_contact_update" />
+                    </group>
                     <group>
                         <field name="electronic_invoice_subjected" />
                         <field
@@ -25,6 +26,7 @@
                     <group
                             attrs="{'invisible': ['|',('electronic_invoice_subjected', '=', False), ('electronic_invoice_obliged_subject', '=', False)]}"
                         >
+                        <field name="is_pa" invisible="True" />
                         <field
                                 name="ipa_code"
                                 placeholder="IPA123"
@@ -60,11 +62,9 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
-            <field name="name" position="after">
-                <field name="electronic_invoice_obliged_subject" invisible="True"/>
-                <field name="electronic_invoice_subjected" invisible="True"/>
-            </field>
             <xpath expr="//div[@name='div_address']/../../.." position="after">
+                <field name="electronic_invoice_obliged_subject" invisible="True" />
+                <field name="electronic_invoice_subjected" invisible="True" />
                 <group
                     string="E-invoicing"
                     name="e_invoice_info"

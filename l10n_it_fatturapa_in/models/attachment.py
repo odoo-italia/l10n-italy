@@ -83,6 +83,10 @@ class FatturaPAAttachmentIn(models.Model):
     def get_xml_string(self):
         return self.ir_attachment_id.get_xml_string()
 
+    def recompute_xml_fields(self):
+        self._compute_xml_data()
+        self._compute_registered()
+
     @api.depends("ir_attachment_id.datas")
     def _compute_xml_data(self):
         for att in self:
@@ -93,7 +97,6 @@ class FatturaPAAttachmentIn(models.Model):
             wiz_obj = self.env["wizard.import.fatturapa"].with_context(
                 from_attachment=att
             )
-            # if wiz_obj:
             fatt = wiz_obj.get_invoice_obj(att)
             cedentePrestatore = fatt.FatturaElettronicaHeader.CedentePrestatore
             partner_id = wiz_obj.getCedPrest(cedentePrestatore)
@@ -123,7 +126,7 @@ class FatturaPAAttachmentIn(models.Model):
     def extract_attachments(self, AttachmentsData, invoice_id):
         AttachModel = self.env["fatturapa.attachments"]
         for attach in AttachmentsData:
-            if 'NomeAttachment' not in attach or not attach.NomeAttachment:
+            if not attach.NomeAttachment:
                 name = _("Attachment without name")
             else:
                 name = attach.NomeAttachment
@@ -131,9 +134,9 @@ class FatturaPAAttachmentIn(models.Model):
             _attach_dict = {
                 "name": name,
                 "datas": base64.b64encode(content),
-                "description": "" if 'DescrizioneAttachment' not in attach else attach.DescrizioneAttachment,
-                "compression": "" if 'AlgoritmoCompressione' not in attach else attach.AlgoritmoCompressione,
-                "format":  "" if 'FormatoAttachment' not in attach else attach.FormatoAttachment,
+                "description": attach.DescrizioneAttachment or "",
+                "compression": attach.AlgoritmoCompressione or "",
+                "format": attach.FormatoAttachment or "",
                 "invoice_id": invoice_id,
             }
             AttachModel.create(_attach_dict)

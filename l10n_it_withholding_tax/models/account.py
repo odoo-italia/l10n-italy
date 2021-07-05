@@ -4,6 +4,7 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools.float_utils import float_round
 
 
 class AccountFullReconcile(models.Model):
@@ -24,8 +25,6 @@ class AccountFullReconcile(models.Model):
             if wt_move.full_reconcile_id:
                 wt_move.action_paid()
         return res
-
-
 
     def unlink(self):
         for rec in self:
@@ -52,11 +51,14 @@ class AccountPartialReconcile(models.Model):
         if vals.get("credit_move_id"):
             ml_ids.append(vals.get("credit_move_id"))
         move_lines = self.env["account.move.line"].browse(ml_ids)
-        for ml in move_lines:
-            #domain = [("move_id", "=", ml.move_id.id)]
-            invoice = self.env["account.move"].browse(ml.move_id.id)
-            if invoice:
-                break
+        invoice = move_lines.filtered(lambda x: x.exists()).move_id.filtered(
+            lambda x: x.is_invoice()
+        )
+        # XXX
+        # the following code mimics 12.0 behaviour; probably it's not correct
+        if invoice:
+            invoice = invoice[0]
+
         # Limit value of reconciliation
         if invoice and invoice.withholding_tax and invoice.amount_net_pay:
             # We must consider amount in foreign currency, if present
@@ -187,10 +189,10 @@ class AccountAbstractPayment(models.Model):
         Compute amount to pay proportionally to amount total - wt
         """
         rec = super(AccountAbstractPayment, self).default_get(fields)
-        invoice_defaults = rec.get("invoice_ids")
-        # self.resolve_2many_commands(
-        #     "invoice_ids", rec.get("invoice_ids")
-        # )
+        invoice_defaults = self.new(
+            {"reconciled_invoice_ids": rec.get("reconciled_invoice_ids")}
+        ).reconciled_invoice_ids
+
         if invoice_defaults and len(invoice_defaults) == 1:
             invoice = invoice_defaults[0]
             if (
@@ -303,9 +305,7 @@ class AccountMove(models.Model):
     @api.depends(
         "invoice_line_ids.price_subtotal",
         "withholding_tax_line_ids.tax",
-        "currency_id",
-        "company_id",
-        "invoice_date",
+        "amount_total",
         # "payment_move_line_ids",
     )
     def _compute_amount_withholding_tax(self):
@@ -313,20 +313,29 @@ class AccountMove(models.Model):
         for invoice in self:
             withholding_tax_amount = 0.0
             for wt_line in invoice.withholding_tax_line_ids:
-                withholding_tax_amount += round(
+                withholding_tax_amount += float_round(
                     wt_line.tax, dp_obj.precision_get("Account")
                 )
             invoice.amount_net_pay = invoice.amount_total - withholding_tax_amount
-            # amount_net_pay_residual = invoice.amount_net_pay
+            amount_net_pay_residual = invoice.amount_net_pay
             invoice.withholding_tax_amount = withholding_tax_amount
-            # XXX da vedere
-            # for line in invoice.payment_move_line_ids:
-            #    if not line.withholding_tax_generated_by_move_id:
-            #        amount_net_pay_residual -= line.debit or line.credit
-            # invoice.amount_net_pay_residual = amount_net_pay_residual
+
+            reconciled_lines = invoice.line_ids.filtered(
+                lambda line: line.account_id.user_type_id.type
+                in ("receivable", "payable")
+            )
+            reconciled_amls = reconciled_lines.mapped(
+                "matched_debit_ids.debit_move_id"
+            ) + reconciled_lines.mapped("matched_credit_ids.credit_move_id")
+
+            for line in reconciled_amls:
+                if not line.withholding_tax_generated_by_move_id:
+                    amount_net_pay_residual -= line.debit or line.credit
+            invoice.amount_net_pay_residual = float_round(
+                amount_net_pay_residual, dp_obj.precision_get("Account")
+            )
 
     withholding_tax = fields.Boolean("Withholding Tax")
-
     withholding_tax_line_ids = fields.One2many(
         "account.invoice.withholding.tax",
         "invoice_id",
@@ -335,7 +344,6 @@ class AccountMove(models.Model):
         readonly=True,
         states={"draft": [("readonly", False)]},
     )
-
     withholding_tax_amount = fields.Float(
         compute="_compute_amount_withholding_tax",
         digits="Account",
@@ -358,53 +366,30 @@ class AccountMove(models.Model):
         readonly=True,
     )
 
-    @api.model
-    def create(self, vals):
-        invoice = super(AccountMove, self.with_context(mail_create_nolog=True)).create(
-            vals
-        )
-
-        if (
-            any(line.invoice_line_tax_wt_ids for line in invoice.invoice_line_ids)
-            and not invoice.withholding_tax_line_ids
-        ):
-            invoice._save_wt()
-
-        return invoice
-
-
     @api.onchange("invoice_line_ids")
     def _onchange_invoice_line_wt_ids(self):
         self.ensure_one()
-        self._save_wt()
-
-    def _save_wt(self):
-        self.ensure_one()
         wt_taxes_grouped = self.get_wt_taxes_values()
-        # wt_tax_lines = [(5, 0, 0)]
-
-        withholding_tax_line_ids = self.env['account.invoice.withholding.tax']
+        wt_tax_lines = [(5, 0, 0)]
         for tax in wt_taxes_grouped.values():
-            withholding_tax_line_ids |= self.env['account.invoice.withholding.tax'].create(tax)
-
-        self.withholding_tax_line_ids = withholding_tax_line_ids
-
-        if len(self.withholding_tax_line_ids) > 1:
+            wt_tax_lines.append((0, 0, tax))
+        self.withholding_tax_line_ids = wt_tax_lines
+        if len(wt_tax_lines) > 1:
             self.withholding_tax = True
         else:
             self.withholding_tax = False
 
-    def action_move_create(self):
+    def action_post(self):
         """
         Split amount withholding tax on account move lines
         """
         dp_obj = self.env["decimal.precision"]
-        res = super(AccountMove, self).action_move_create()
+        res = super().action_post()
 
         for inv in self:
             # Rates
             rate_num = 0
-            for move_line in inv.move_id.line_ids:
+            for move_line in inv.line_ids:
                 if move_line.account_id.internal_type not in ["receivable", "payable"]:
                     continue
                 rate_num += 1
@@ -416,7 +401,7 @@ class AccountMove(models.Model):
             wt_residual = inv.withholding_tax_amount
             # Re-read move lines to assign the amounts of wt
             i = 0
-            for move_line in inv.move_id.line_ids:
+            for move_line in inv.line_ids:
                 if move_line.account_id.internal_type not in ["receivable", "payable"]:
                     continue
                 i += 1
@@ -428,7 +413,7 @@ class AccountMove(models.Model):
                 # update line
                 move_line.write({"withholding_tax_amount": wt_amount})
             # Create WT Statement
-            self.create_wt_statement()
+            inv.create_wt_statement()
         return res
 
     def get_wt_taxes_values(self):
@@ -437,15 +422,10 @@ class AccountMove(models.Model):
             for line in invoice.invoice_line_ids:
                 taxes = []
                 for wt_tax in line.invoice_line_tax_wt_ids:
+                    wt_tax = wt_tax._origin
                     res = wt_tax.compute_tax(line.price_subtotal)
-                    id = wt_tax.id
-                    if not isinstance(id, int):
-                        try:
-                            id = id.origin
-                        except Exception as inst:
-                            print('type id witholding tax not found')
                     tax = {
-                        "id": id,
+                        "id": wt_tax._origin.id,
                         "sequence": wt_tax.sequence,
                         "base": res["base"],
                         "tax": res["tax"],
@@ -453,21 +433,13 @@ class AccountMove(models.Model):
                     taxes.append(tax)
 
                 for tax in taxes:
-                    invoice_id = invoice.id
-                    if not isinstance(invoice_id, int):
-                        try:
-                            invoice_id = invoice_id.origin
-                        except Exception as inst:
-                            print('invoice_id new id error')
                     val = {
-                        "invoice_id": invoice_id,
+                        "invoice_id": invoice.id,
                         "withholding_tax_id": tax["id"],
                         "tax": tax["tax"],
                         "base": tax["base"],
                         "sequence": tax["sequence"],
                     }
-
-
 
                     key = (
                         self.env["withholding.tax"]
@@ -491,13 +463,13 @@ class AccountMove(models.Model):
         for inv_wt in self.withholding_tax_line_ids:
             wt_base_amount = inv_wt.base
             wt_tax_amount = inv_wt.tax
-            if self.type in ["in_refund", "out_refund"]:
+            if self.move_type in ["in_refund", "out_refund"]:
                 wt_base_amount = -1 * wt_base_amount
                 wt_tax_amount = -1 * wt_tax_amount
             val = {
                 "wt_type": "",
-                "date": self.move_id.date,
-                "move_id": self.move_id.id,
+                "date": self.date,
+                "move_id": self.id,
                 "invoice_id": self.id,
                 "partner_id": self.partner_id.id,
                 "withholding_tax_id": inv_wt.withholding_tax_id.id,
@@ -506,20 +478,15 @@ class AccountMove(models.Model):
             }
             wt_statement_obj.create(val)
 
-    @api.model
-    def _get_payments_vals(self):
-        payment_vals = super(AccountMove, self)._get_payments_vals()
-        if self.payment_move_line_ids:
-            for payment_val in payment_vals:
-                move_line = self.env["account.move.line"].browse(
-                    payment_val["payment_id"]
-                )
-                if move_line.withholding_tax_generated_by_move_id:
-                    payment_val["wt_move_line"] = True
-                else:
-                    payment_val["wt_move_line"] = False
+    def _get_reconciled_info_JSON_values(self):
+        payment_vals = super(AccountMove, self)._get_reconciled_info_JSON_values()
+        for payment_val in payment_vals:
+            move_line = self.env["account.move.line"].browse(payment_val["payment_id"])
+            if move_line.withholding_tax_generated_by_move_id:
+                payment_val["wt_move_line"] = True
+            else:
+                payment_val["wt_move_line"] = False
         return payment_vals
-
 
 
 class AccountMoveLine(models.Model):
@@ -531,8 +498,6 @@ class AccountMoveLine(models.Model):
     withholding_tax_generated_by_move_id = fields.Many2one(
         "account.move", string="Withholding Tax generated from", readonly=True
     )
-
-    invoice_id = fields.Many2one('account.move', related="move_id")
 
     def remove_move_reconcile(self):
         # When unreconcile a payment with a wt move linked, it will be
@@ -581,6 +546,7 @@ class AccountMoveLine(models.Model):
         string="W.T.",
         default=_default_withholding_tax,
     )
+
 
 class AccountInvoiceWithholdingTax(models.Model):
     """

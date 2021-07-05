@@ -5,7 +5,7 @@
 
 {
     "name": "ITA - Withholding Tax",
-    "version": "14.0.2.0.0",
+    "version": "14.0.1.0.0",
     "category": "Account",
     "author": "Openforce, Odoo Italia Network, " "Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/l10n-italy",
@@ -24,4 +24,5 @@
         "static/src/xml/account_payment.xml",
     ],
     "installable": True,
+    "development_status": "Alpha",
 }

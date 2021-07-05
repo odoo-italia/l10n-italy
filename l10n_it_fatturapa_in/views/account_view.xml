@@ -31,6 +31,13 @@
                                     text="Show preview"
                                     attrs="{'invisible': [('id', '=', False)]}"
                                 />
+                                <button
+                                    type="object"
+                                    name="recompute_xml_fields"
+                                    string="Recompute XML fields"
+                                    icon="fa-refresh"
+                                    attrs="{'invisible': [('invoices_number', '!=', 0), ('xml_supplier_id', '!=', False), ('invoices_date', '!=', False)]}"
+                                />
                             </div>
                             <field name="name" invisible="1" />
                         </group>
@@ -244,7 +251,11 @@
                             <field name="e_invoice_amount_total" />
                         </group>
                     </group>
-                    <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="e_invoice_line_ids" string="Lines Detail"/>
+                    <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="e_invoice_line_ids"
+                        string="Lines Detail"
+                    />
                         <field name="e_invoice_line_ids" nolabel="1">
                             <tree string="Lines Detail">
                                 <field name="line_number" />
@@ -276,29 +287,33 @@
                                     </group>
                                     <separator string="Articles Code" />
                                     <field
-                                        name="cod_article_ids"
-                                        nolabel="1"
-                                        colspan="4"
-                                    >
+                                    name="cod_article_ids"
+                                    nolabel="1"
+                                    colspan="4"
+                                >
                                     </field>
                                     <separator string="Discount Supplement" />
                                     <field
-                                        name="discount_rise_price_ids"
-                                        nolabel="1"
-                                        colspan="4"
-                                    >
+                                    name="discount_rise_price_ids"
+                                    nolabel="1"
+                                    colspan="4"
+                                >
                                     </field>
                                     <separator string="Other Administrative Data" />
                                     <field
-                                        name="other_data_ids"
-                                        nolabel="1"
-                                        colspan="4"
-                                    >
+                                    name="other_data_ids"
+                                    nolabel="1"
+                                    colspan="4"
+                                >
                                     </field>
                                 </group>
                             </form>
                         </field>
-                        <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="fatturapa_summary_ids" string="Summary Data"/>
+                        <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="fatturapa_summary_ids"
+                        string="Summary Data"
+                    />
                         <field name="fatturapa_summary_ids" nolabel="1" readonly="1">
                             <tree editable="bottom" string="Summary Data">
                                 <field name="tax_rate" />
@@ -329,12 +344,16 @@
                             <field name="ftpa_incoterms" readonly="1" />
                         </group>
                     </group>
-                        <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="fatturapa_doc_attachments" string="Attachments"/>
+                        <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="fatturapa_doc_attachments"
+                        string="Attachments"
+                    />
                         <field
-                            name="fatturapa_doc_attachments"
-                            nolabel="1"
-                            readonly="1"
-                        >
+                        name="fatturapa_doc_attachments"
+                        nolabel="1"
+                        readonly="1"
+                    >
                             <tree string="Attachments">
                                 <field name="ir_attachment_id" />
                                 <field name="name" />
@@ -353,8 +372,12 @@
                                 </group>
                             </form>
                         </field>
-                        <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="related_documents" string="Related Documents"/>
-                        <field name="related_documents" nolabel="1" readonly="1">
+                                        <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="related_documents"
+                        string="Related Documents"
+                    />
+                        <field name="related_documents" nolabel="1">
                             <tree editable="bottom" string="Related Documents">
                                 <field name="type" />
                                 <field name="name" />
@@ -364,9 +387,14 @@
                                 <field name="code" />
                                 <field name="cig" />
                                 <field name="cup" />
+                                <field name="invoice_id" invisible="1" />
                             </tree>
                         </field>
-                    <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="welfare_fund_ids" string="Welfare Fund"/>
+                    <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="welfare_fund_ids"
+                        string="Welfare Fund"
+                    />
                         <field name="welfare_fund_ids" nolabel="1" readonly="1">
                             <tree editable="bottom" string="Welfare Fund Details">
                                 <field name="name" />
@@ -379,14 +407,22 @@
                                 <field name="pa_line_code" />
                             </tree>
                         </field>
-                    <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="ftpa_withholding_ids" string="Withholding"/>
+                    <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="ftpa_withholding_ids"
+                        string="Withholding"
+                    />
                         <field name="ftpa_withholding_ids" nolabel="1" readonly="1">
                             <tree editable="bottom" string="Withholding Details">
                                 <field name="name" />
                                 <field name="amount" />
                             </tree>
                         </field>
-                    <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="fatturapa_payments" string="Payments"/>
+                    <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="fatturapa_payments"
+                        string="Payments"
+                    />
                         <field name="fatturapa_payments" nolabel="1" readonly="1">
                             <tree string="Payments">
                                 <field name="payment_terms" />
@@ -398,21 +434,25 @@
                                     </group>
                                     <group string="Payments Details">
                                         <field
-                                            name="payment_methods"
-                                            nolabel="1"
-                                            readonly="1"
-                                        />
+                                        name="payment_methods"
+                                        nolabel="1"
+                                        readonly="1"
+                                    />
                                     </group>
                                 </sheet>
                             </form>
                         </field>
-                    <label style="font-size: 1.625rem; font-weight: normal; color:#666666;" for="activity_progress_ids" string="Progress data"/>
+                    <label
+                        style="font-size: 1.625rem; font-weight: normal; color:#666666;"
+                        for="activity_progress_ids"
+                        string="Progress data"
+                    />
                         <field
-                            name="activity_progress_ids"
-                            nolabel="1"
-                            readonly="1"
-                            colspan="2"
-                        >
+                        name="activity_progress_ids"
+                        nolabel="1"
+                        readonly="1"
+                        colspan="2"
+                    >
                             <tree>
                                 <field name="fatturapa_activity_progress" />
                             </tree>

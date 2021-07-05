@@ -16,13 +16,11 @@ class WithholdingTax(models.Model):
     )
     def _compute_get_rate(self):
         for wt in self:
-            id = wt.id
-            if not isinstance(id,int):
-                try:
-                    id = id.origin
-                except Exception as inst:
-                    print('type id witholding tax not found')
-
+            wt.tax = 0
+            wt.base = 1
+            wt_id = wt._origin.id or wt.id
+            if not wt_id:
+                continue
             self.env.cr.execute(
                 """
                 SELECT tax, base FROM withholding_tax_rate
@@ -30,15 +28,12 @@ class WithholdingTax(models.Model):
                      and (date_start <= current_date or date_start is null)
                      and (date_stop >= current_date or date_stop is null)
                     ORDER by date_start LIMIT 1""",
-                (id,),
+                (wt_id,),
             )
             rate = self.env.cr.fetchone()
             if rate:
                 wt.tax = rate[0]
                 wt.base = rate[1]
-            else:
-                wt.tax = 0
-                wt.base = 1
 
     def _default_wt_journal(self):
         misc_journal = self.env["account.journal"].search([("code", "=", _("MISC"))])
@@ -150,32 +145,36 @@ class WithholdingTaxRate(models.Model):
 
     @api.constrains("date_start", "date_stop")
     def _check_date(self):
-        self.ensure_one()
-        if self.withholding_tax_id.active:
-            domain = [
-                ("withholding_tax_id", "=", self.withholding_tax_id.id),
-                ("id", "!=", self.id),
-            ]
-            if self.date_start:
-                domain.extend(
-                    [
-                        "|",
-                        ("date_stop", ">=", self.date_start),
-                        ("date_stop", "=", False),
-                    ]
-                )
-            if self.date_stop:
-                domain.extend(
-                    [
-                        "|",
-                        ("date_start", "<=", self.date_stop),
-                        ("date_start", "=", False),
-                    ]
-                )
+        for rate in self:
+            if rate.withholding_tax_id.active:
+                domain = [
+                    ("withholding_tax_id", "=", rate.withholding_tax_id.id),
+                    ("id", "!=", rate.id),
+                ]
+                if rate.date_start:
+                    domain.extend(
+                        [
+                            "|",
+                            ("date_stop", ">=", rate.date_start),
+                            ("date_stop", "=", False),
+                        ]
+                    )
+                if rate.date_stop:
+                    domain.extend(
+                        [
+                            "|",
+                            ("date_start", "<=", rate.date_stop),
+                            ("date_start", "=", False),
+                        ]
+                    )
 
-            overlapping_rate = self.env["withholding.tax.rate"].search(domain, limit=1)
-            if overlapping_rate:
-                raise ValidationError(_("Error! You cannot have 2 rates that overlap!"))
+                overlapping_rate = rate.env["withholding.tax.rate"].search(
+                    domain, limit=1
+                )
+                if overlapping_rate:
+                    raise ValidationError(
+                        _("Error! You cannot have 2 rates that overlap!")
+                    )
 
     withholding_tax_id = fields.Many2one(
         "withholding.tax", string="Withholding Tax", ondelete="cascade", readonly=True
@@ -188,7 +187,6 @@ class WithholdingTaxRate(models.Model):
 
 
 class WithholdingTaxStatement(models.Model):
-
     """
     The Withholding tax statement are created at the invoice validation
     """
@@ -283,7 +281,6 @@ class WithholdingTaxStatement(models.Model):
 
 
 class WithholdingTaxMove(models.Model):
-
     """
     The Withholding tax moves are created at the payment of invoice
     """
@@ -304,11 +301,7 @@ class WithholdingTaxMove(models.Model):
     )
     statement_id = fields.Many2one("withholding.tax.statement", "Statement")
     wt_type = fields.Selection(
-        [
-            ("in", "In"),
-            ("out", "Out"),
-        ],
-        "Type",
+        string="Type",
         store=True,
         related="statement_id.wt_type",
     )
@@ -407,7 +400,7 @@ class WithholdingTaxMove(models.Model):
                 )
                 if self.payment_line_id.credit:
                     ml_vals["debit"] = abs(self.amount)
-                    if self.credit_debit_line_id.invoice_id.move_type in [
+                    if self.credit_debit_line_id.move_id.move_type in [
                         "in_refund",
                         "out_refund",
                     ]:
@@ -420,7 +413,7 @@ class WithholdingTaxMove(models.Model):
                         ] = self.withholding_tax_id.account_receivable_id.id
                 else:
                     ml_vals["credit"] = abs(self.amount)
-                    if self.credit_debit_line_id.invoice_id.move_type in [
+                    if self.credit_debit_line_id.move_id.move_type in [
                         "in_refund",
                         "out_refund",
                     ]:
@@ -436,7 +429,8 @@ class WithholdingTaxMove(models.Model):
 
         move_vals["line_ids"] = move_lines
         move = self.env["account.move"].create(move_vals)
-        move.post()
+        move.action_post()
+
         # Save move in the wt move
         self.wt_account_move_id = move.id
 
@@ -450,7 +444,7 @@ class WithholdingTaxMove(models.Model):
                 line_to_reconcile = line
                 break
         if line_to_reconcile:
-            if self.credit_debit_line_id.invoice_id.move_type in [
+            if self.credit_debit_line_id.move_id.move_type in [
                 "in_refund",
                 "out_invoice",
             ]:
@@ -466,6 +460,8 @@ class WithholdingTaxMove(models.Model):
                     "debit_move_id": debit_move_id,
                     "credit_move_id": credit_move_id,
                     "amount": abs(self.amount),
+                    "credit_amount_currency": abs(self.amount),
+                    "debit_amount_currency": abs(self.amount),
                 }
             )
 

@@ -8,7 +8,7 @@ from odoo.addons.account.tests.test_account_account import TestAccountAccount
 
 class TestSP(TestAccountAccount):
     def setUp(self):
-        super(TestSP, self).setUp()
+        super().setUp()
         self.tax_model = self.env["account.tax"]
         self.move_model = self.env["account.move"]
         self.term_model = self.env["account.payment.term"]
