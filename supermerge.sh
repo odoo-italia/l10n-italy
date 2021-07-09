@@ -8,19 +8,19 @@
 
 function rebase_n_merge()
 {
-	repo="$1"
-	rbranch="$2"
-	lbranch="$3"
+	repo="$1"; shift
+	rbranch="$1"; shift
+	lbranch="$1"; shift
 	git fetch "$repo" "+${rbranch}:${lbranch}"
-	git rebase 14.0-supermerge "${lbranch}"
+	git rebase "$@" 14.0-supermerge "${lbranch}"
 	git checkout 14.0-supermerge
 	git merge --no-edit --no-ff "${lbranch}"
 }
 
 function rebase_n_merge_pr()
 {
-	pr="$1"
-	rebase_n_merge https://github.com/OCA/l10n-italy "pull/${pr}/head" "pr-${pr}"
+	pr="$1"; shift
+	rebase_n_merge https://github.com/OCA/l10n-italy "pull/${pr}/head" "pr-${pr}" "$@"
 }
 
 # clone iniziale
@@ -49,7 +49,7 @@ rebase_n_merge_pr 2354
 rebase_n_merge_pr 2154
 rebase_n_merge_pr 2043
 rebase_n_merge_pr 2080
-rebase_n_merge_pr 2310
+rebase_n_merge_pr 2310 -X theirs
 rebase_n_merge_pr 2138
 rebase_n_merge_pr 2139
 rebase_n_merge_pr 2149
