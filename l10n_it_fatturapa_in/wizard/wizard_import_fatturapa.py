@@ -329,6 +329,9 @@ class WizardImportFatturapa(models.TransientModel):
         return partner_id
 
     def getCarrirerPartner(self, Carrier):
+
+        if 'DatiAnagraficiVettore' not in Carrier:
+            return False
         partner_model = self.env["res.partner"]
         partner_id = self.getPartnerBase(Carrier.DatiAnagraficiVettore)
         no_contact_update = False
