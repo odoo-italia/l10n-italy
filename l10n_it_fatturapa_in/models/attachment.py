@@ -81,7 +81,10 @@ class FatturaPAAttachmentIn(models.Model):
             att.e_invoice_validation_message = "\n\n".join(error_messages)
 
     def get_xml_string(self):
-        return self.ir_attachment_id.get_xml_string()
+        try:
+            return self.ir_attachment_id.get_xml_string()
+        except Exception as e:
+            return False
 
     def recompute_xml_fields(self):
         self._compute_xml_data()
@@ -98,6 +101,9 @@ class FatturaPAAttachmentIn(models.Model):
                 from_attachment=att
             )
             fatt = wiz_obj.get_invoice_obj(att)
+            if fatt is False:
+                continue
+
             cedentePrestatore = fatt.FatturaElettronicaHeader.CedentePrestatore
             partner_id = wiz_obj.getCedPrest(cedentePrestatore)
             att.xml_supplier_id = partner_id
