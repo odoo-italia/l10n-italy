@@ -49,6 +49,8 @@ class AccountInvoice(models.Model):
 
     def preventive_checks(self):
         for invoice in self:
+            if not invoice.is_sale_document():
+                raise UserError(_("Impossible to generate XML: not a customer invoice"))
             if (
                 invoice.invoice_payment_term_id
                 and invoice.invoice_payment_term_id.fatturapa_pt_id.code is False
