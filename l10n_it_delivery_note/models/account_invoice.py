@@ -79,7 +79,7 @@ class AccountInvoice(models.Model):
 
         for invoice in self.filtered(lambda i: i.delivery_note_ids):
             new_lines = []
-            old_lines = invoice.invoice_line_ids.filtered(lambda l: l.delivery_note_id)
+            old_lines = invoice.invoice_line_ids.filtered(lambda l: l.note_dn)
             old_lines.unlink()
 
             #
@@ -107,6 +107,7 @@ class AccountInvoice(models.Model):
                     for note_line in delivery_note_line.filtered(
                         lambda l: l.invoice_status == DOMAIN_INVOICE_STATUSES[2]
                     ):
+                        line.delivery_note_id = note_line.delivery_note_id.id
                         new_lines.append(
                             (
                                 0,
@@ -120,6 +121,7 @@ class AccountInvoice(models.Model):
                                             DATE_FORMAT
                                         ),
                                     ),
+                                    "note_dn": True,
                                     "delivery_note_id": note_line.delivery_note_id.id,
                                     "quantity": 0,
                                 },
@@ -149,3 +151,4 @@ class AccountInvoiceLine(models.Model):
     delivery_note_id = fields.Many2one(
         "stock.delivery.note", string="Delivery Note", readonly=True, copy=False
     )
+    note_dn = fields.Boolean(string="Note DN")
