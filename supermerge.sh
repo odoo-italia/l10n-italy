@@ -33,10 +33,10 @@ fi
 set -xe
 rebase_n_merge https://github.com/odoo-italia/l10n-italy 14.0-premerge 14.0-premerge
 # fixes
+#rebase_n_merge_pr 2285
 rebase_n_merge_pr 2303
 rebase_n_merge_pr 2305
 rebase_n_merge_pr 2309
-rebase_n_merge_pr 2311
 rebase_n_merge_pr 2314
 rebase_n_merge_pr 2327
 rebase_n_merge_pr 2332
@@ -51,6 +51,9 @@ rebase_n_merge_pr 2355
 rebase_n_merge_pr 2358
 rebase_n_merge_pr 2360
 rebase_n_merge_pr 2364
+rebase_n_merge_pr 2367
+rebase_n_merge_pr 2369
+rebase_n_merge_pr 2373
 # porting
 rebase_n_merge_pr 2154
 rebase_n_merge_pr 2043
