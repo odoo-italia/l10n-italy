@@ -1,0 +1,19 @@
+Lo scopo di questo branch è quello di permettere test funzionali sulle varie PR verso OCA/l10n-italy.
+
+Il codice presente per definizione NON È STATO DOVUTAMENTE TESTATO O REVISIONATO. Lo scopo è quello di testarlo.
+
+PER CORTESIA NON UTILIZZARE QUESTO BRANCH PER CONTRIBUIRE ALLO SVILUPPO. Le linee guida per partecipare sono
+
+disponibili qui: https://www.odoo-italia.org/contribuire
+
+Ovviamente, si intende che NON sia pronto nemmeno per la produzione.
+
+Al momento, durante lo sviluppo il coordinamento avviene sul nostro server Discord, https://discord.gg/T8523dfU
+
+il Venerdì alle 9:30.
+
+--
+
+Lo script supermerge.sh permette di ricreare ed aggiornare il supermerge.
+
+Leggere i commenti all'interno prima di lanciarlo.
